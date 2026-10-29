@@ -9,7 +9,9 @@ laid out for the foldable iPhone (narrow outer screen, near-square inner screen)
 
 - Type one amount, see it in all four currencies at once. Tap any currency to make it
   the input currency.
-- Live-ish prices for Bitcoin, gold and silver, shown in the selected currency.
+- Live-ish prices for Bitcoin, gold and silver, shown in the selected currency, plus
+  how much Bitcoin / gold / silver the typed amount buys (updates as you type).
+- A small settings sheet: interface language (NL/EN) and appearance (system/light/dark).
 - Looks calm and friendly: warm neutrals, rounded surfaces, generous spacing, one soft
   accent. Never a "trading terminal".
 - Works on the outer and inner screen of a foldable iPhone, and on any ordinary phone
@@ -47,14 +49,15 @@ src/
   styles/tokens.css        design tokens (colors, radii, shadows, type scale), light + dark
   styles/global.css        reset, body, layout grid, breakpoints, safe areas, foldable
   lib/currencies.ts        CURRENCIES list (code, symbol, names nl/en, decimals, tint)
-  lib/money.ts             convert(), parseAmount(), formatMoney(), formatNumber(), ozToGram()
+  lib/money.ts             convert(), parseAmount(), formatMoney(), formatNumber(), ozToGram(), quantityFor(), formatQuantity()
   lib/storage.ts           typed localStorage get/set with namespacing `wissel.*`
   data/rates.ts            fetch + cache fiat rates (open.er-api)
   data/markets.ts          fetch BTC (CoinGecko -> Coinbase fallback), XAU/XAG (gold-api)
   data/usePolling.ts       interval that pauses when document is hidden
   state/SettingsContext.tsx language, base currency, amount; persisted
   i18n/nl.ts, en.ts, index.ts  dictionaries + useT()
-  components/Header/       brand, "last updated", language toggle
+  components/Header/       brand, "last updated", settings button
+  components/Settings/     SettingsSheet (language + appearance), Segmented control
   components/Converter/    ConverterCard, CurrencyRow, AmountInput
   components/Markets/      MarketsSection, MarketTile, ChangePill, LiveDot
   components/ui/           Card, Pill, SymbolBadge (shared primitives)
@@ -97,14 +100,22 @@ interface MarketQuote {
 
 interface Settings {
   language: 'nl' | 'en';
+  theme: 'system' | 'light' | 'dark';
   base: CurrencyCode;          // the input currency
   amount: string;              // raw input text, so the user sees what they typed
 }
 ```
 
+Theme is applied as `data-theme="light" | "dark"` on `<html>` (attribute removed for
+`system`). `tokens.css` defines light values on `:root`, dark values under
+`@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) }` and again under
+`:root[data-theme="dark"]`. The `<meta name="theme-color">` is updated to `--bg` on change.
+
 Conversion: `convert(amount, from, to, rates) = amount / rates[from] * rates[to]`.
 Metals and BTC: provider gives USD; display in base via `convert(priceUsd, 'USD', base, rates)`.
 Gold/silver per gram = per troy ounce / 31.1034768.
+Quantity the typed amount buys: `quantity = convert(amount, base, 'USD', rates) / priceUsd`
+(in BTC, or in troy ounces; grams = ounces * 31.1034768).
 
 ## 6. External integrations (all free, no key, CORS `*`; verified 2026-10-29)
 
@@ -134,10 +145,14 @@ Rules:
    input shows `0` in the other rows, greyed.
 3. **Tap another currency row** -> it becomes the base; the typed amount stays as-is
    (it now means that currency). The active highlight moves with a 200 ms ease.
-4. **Markets** show price in the current base currency; change base -> tiles follow.
-5. **Toggle language** (NL/EN pill in header) -> all copy and number formatting switch;
-   persisted.
-6. **Dark mode** follows `prefers-color-scheme`. No manual toggle in MVP.
+4. **Markets** show, per asset, how much of it the typed amount buys (big number) and
+   the unit price in the current base currency (caption). Typing updates the quantities
+   live; changing the base currency updates both. Empty amount -> quantity shows `0`
+   greyed, price caption stays.
+5. **Settings** (gear button in header) opens a sheet with two segmented controls:
+   language `NL | EN` and appearance `Systeem | Licht | Donker`. Changes apply instantly
+   and persist. Close via the X, tapping the backdrop, or Escape.
+6. **Appearance** defaults to `system`; `light`/`dark` override `prefers-color-scheme`.
 
 ## 8. Design
 
@@ -178,9 +193,22 @@ amount 20/24 700 tabular, caption 13/18 500, micro 11/14 600 uppercase tracking 
 
 ### Screen: Dashboard (the only screen)
 
-**Header** (no card): brand "Wissel" title-size left; right: language pill
-(`NL · EN`, active half filled accent-soft). Below brand, caption: "Koersen bijgewerkt
-29 okt, 02:02" with a small refresh icon button (tap = refresh everything).
+**Header** (no card): brand "Wissel" title-size left; right: a 44 px round settings
+button (`--surface` background, gear glyph in `--text-2`, inline SVG, no icon library).
+Below brand, caption: "Koersen bijgewerkt 29 okt, 02:02" with a small refresh icon
+button (tap = refresh everything).
+
+**Settings sheet** (`components/Settings`): native `<dialog>`; on `< 640 px` a bottom
+sheet (full width, top corners `--radius-card`, slides up 200 ms, drag handle 36x4 px in
+`--line`); on `>= 640 px` a centred dialog 420 px wide, `--radius-card`. Backdrop
+`rgba(43,40,36,.35)`. Content, padding 20: title "Instellingen"/"Settings" 22/800 with a
+44 px X close button top-right; two groups, each micro label + Segmented control:
+- "TAAL"/"LANGUAGE": `Nederlands | English`
+- "WEERGAVE"/"APPEARANCE": `Systeem | Licht | Donker` / `System | Light | Dark`
+Segmented control: `--bg` track, `--radius-pill`, 4 px padding, segments 40 px tall,
+active segment `--surface` with `--shadow-card` at half strength and `--text`, inactive
+`--text-2`; thumb slides 200 ms. Changes apply immediately (no save button). Focus is
+trapped in the dialog; Escape and backdrop click close it.
 
 **Converter card** (`--surface`, `--radius-card`, `--shadow-card`, padding 20):
 - Micro label "OMREKENEN" / "CONVERT".
@@ -195,18 +223,28 @@ amount 20/24 700 tabular, caption 13/18 500, micro 11/14 600 uppercase tracking 
 
 **Markets section** below (narrow) or right column (wide):
 - Micro label "MARKTEN" / "MARKETS" with LiveDot + "live · 12 s geleden".
-- Three MarketTiles in `grid: repeat(auto-fit, minmax(150px, 1fr))`, gap 12. Tile: card
-  styling, padding 16; top: 36 px badge (BTC: `--tint-btc` with ₿; gold/silver: metallic
-  gradient circle, no glyph) + name 15/700; middle: price 22/800 tabular in base
-  currency; bottom: BTC -> ChangePill (`+2,1 %` in up/down soft pill); gold/silver ->
-  caption "per troy ounce" and second caption "€ 118,42 / gram".
+- Three MarketTiles stacked as full-width rows, gap 10 (narrow and wide alike). Tile:
+  card styling, `--radius-row` + 4 px (20 px), padding 14 16; layout = badge · texts ·
+  right-aligned numbers:
+  - 38 px badge (BTC: `--tint-btc` with ₿; gold/silver: metallic gradient circle, no
+    glyph).
+  - texts: name 16/700 ("Bitcoin"/"Goud"/"Zilver"); caption 13 = unit price in base
+    currency: BTC "€ 63.209 per bitcoin"; gold/silver "€ 116,03 per gram" with a second
+    caption "€ 3.608,95 per troy ounce".
+  - numbers (right): quantity the typed amount buys, 20/800 tabular, with unit:
+    BTC "0,01978 BTC"; gold/silver in grams "10,77 g" (ounces not shown as quantity).
+    Under it: BTC -> ChangePill (`−3,1 %`, up/down soft pill); gold/silver -> caption
+    "≈ 0,346 oz".
+  - Quantity formatting: BTC = up to 5 significant digits, max 8 decimals, trailing
+    zeros stripped (`0,01978`, `1,2345`, `12,5`); grams = 2 decimals under 100, else 0.
+  - Empty/zero amount: quantity `0 BTC` / `0 g` in `--text-2`.
 - Stale/offline: tile shows a small cloud-off glyph next to the timestamp, numbers dim
   to 70 %.
 
 ### Responsive / foldable
 
 - `< 640 px` wide (outer screen, ordinary phones): single column, 16 px gutters, card
-  stack, markets tiles 3-up if >= 420 px, otherwise 1-up rows.
+  stack, markets tiles as full-width rows.
 - `>= 640 px` (inner screen open, tablets, desktop): two columns `1.15fr 1fr`, gap 24,
   content max-width 1040 centered, 24 px gutters. Converter left, markets right stacked
   vertically (each tile full width of column).
@@ -230,7 +268,15 @@ amount 20/24 700 tabular, caption 13/18 500, micro 11/14 600 uppercase tracking 
 | offline | Geen verbinding, laatste koersen | Offline, showing last rates |
 | perOunce | per troy ounce | per troy ounce |
 | perGram | per gram | per gram |
+| perBitcoin | per bitcoin | per bitcoin |
+| approxOz | ≈ {n} oz | ≈ {n} oz |
 | refresh | Vernieuwen | Refresh |
+| settings | Instellingen | Settings |
+| close | Sluiten | Close |
+| language | Taal | Language |
+| lang.nl / lang.en | Nederlands / English | Nederlands / English |
+| appearance | Weergave | Appearance |
+| theme.system / light / dark | Systeem / Licht / Donker | System / Light / Dark |
 | cur.EUR | Euro | Euro |
 | cur.USD | Amerikaanse dollar | US dollar |
 | cur.GBP | Britse pond | British pound |
@@ -254,7 +300,10 @@ no `window.location` routing.
 - Dashboard renders live numbers for the four currencies and the three assets within
   2 s on a normal connection; cached numbers render instantly on reload.
 - Conversion matches `amount / rate[from] * rate[to]` to the cent in tests.
-- Language toggle switches all copy and formats; survives reload.
+- Settings sheet: language switches all copy and formats; appearance overrides the
+  system scheme; both survive reload.
+- Typing an amount updates the BTC / gold / silver quantities to the correct ratio
+  (tested against `convert(amount, base, 'USD') / priceUsd`).
 - Layout verified at 390x844 (phone), 474x696 (foldable outer), 904x640 (foldable inner,
   open) and 1280x800 (desktop): no horizontal scroll, no clipped text, no overlap.
 - Dark mode has no unreadable contrast (text on surface >= 4.5:1).
