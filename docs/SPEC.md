@@ -240,6 +240,13 @@ trapped in the dialog; Escape and backdrop click close it.
   - Empty/zero amount: quantity `0 BTC` / `0 g` in `--text-2`.
 - Stale/offline: tile shows a small cloud-off glyph next to the timestamp, numbers dim
   to 70 %.
+- **Rates tile** (fourth tile, below silver, same card styling): left a 38 px SymbolBadge
+  of the base currency; texts: `1 EUR` (16/700, the base code) with caption
+  "Wisselkoers" / "Exchange rate"; right column: one line per other currency in
+  `CURRENCIES` order, `0,8373 GBP` style: value 17/700 tabular (4 decimals,
+  `formatNumber`) followed by the code 13/600 in `--text-2`, right-aligned, lines 2 px
+  apart. Values are `convert(1, base, code, rates)`. No rates -> `—` and shimmer. Follows
+  the base currency: with USD as base it shows 1 USD to EUR, GBP, AED.
 
 ### Responsive / foldable
 
@@ -269,6 +276,7 @@ trapped in the dialog; Escape and backdrop click close it.
 | perOunce | per troy ounce | per troy ounce |
 | perGram | per gram | per gram |
 | perBitcoin | per bitcoin | per bitcoin |
+| exchangeRate | Wisselkoers | Exchange rate |
 | approxOz | ≈ {n} oz | ≈ {n} oz |
 | refresh | Vernieuwen | Refresh |
 | settings | Instellingen | Settings |

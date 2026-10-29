@@ -93,3 +93,12 @@ Lighthouse PWA installable; lint/test pass.
 
 After tasks 3-6: run build/lint/test, open preview in the browser at 390x844, 474x696,
 904x640 and 1280x800, both color schemes, check every item of SPEC §10, commit.
+
+## Task 7 — Rates tile `[~]`  (tier: medium, deps: 4)
+
+Add the fourth "rates" tile to the markets section per SPEC §8 "Rates tile": 1 unit of
+the base currency to the other three, 4 decimals, same card styling as the asset tiles,
+shimmer when rates are missing. New i18n key `exchangeRate` in `nl.ts`/`en.ts`.
+Verify: component test (base EUR, rates USD 1.1 / GBP 0.85 / AED 4 -> `1,1000 USD`,
+`0,8500 GBP`, `4,0000 AED`; base USD -> `0,9091 EUR`), manual check at 390 and 904 px,
+lint/build/test pass.
