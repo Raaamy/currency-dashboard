@@ -78,7 +78,7 @@ Verify: component test (opening the sheet and choosing English changes the heade
 caption language; choosing Dark sets `data-theme="dark"` on `<html>`). Manual check at
 390 and 904 px. Lint/build/test pass.
 
-## Task 6 — PWA, icons, iOS docs `[~]`  (tier: light, deps: 3, 4, 5)
+## Task 6 — PWA, icons, iOS docs `[x]`  (tier: light, deps: 3, 4, 5)
 
 Add `public/icon.svg` (soft apricot rounded square, white "W" in Nunito-like geometry),
 generate the icon set with `@vite-pwa/assets-generator`, configure `vite-plugin-pwa`

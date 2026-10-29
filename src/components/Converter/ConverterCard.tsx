@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef, type MouseEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, type MouseEvent } from 'react';
 import { Card } from '@/components/ui/Card';
 import { useRates } from '@/data';
 import { useT } from '@/i18n';
@@ -29,6 +29,13 @@ export function ConverterCard() {
 
   const rates = data?.rates ?? null;
   const parsed = parseAmount(amount);
+
+  // SPEC §7.1: focus the amount on open only where a keyboard will not pop up (mouse devices).
+  useEffect(() => {
+    if (window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) {
+      inputRef.current?.focus();
+    }
+  }, []);
 
   useLayoutEffect(() => {
     if (!focusAfterSwitch.current) return;

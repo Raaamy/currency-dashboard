@@ -8,14 +8,16 @@ One line per entry: `path — what / when to touch`.
 - `docs/IOS.md` — (task 5) steps to wrap the build in Capacitor for iOS
 - `filemap.md` — this index
 - `package.json` — deps and scripts (dev, build, preview, lint, format, test, test:watch); touch when adding deps/scripts
-- `vite.config.ts` — Vite (`base: './'`, `@/` alias) + Vitest config (jsdom, globals, setup file); PWA plugin goes here (task 6)
+- `vite.config.ts` — Vite (`base: './'`, `@/` alias) + Vitest config (jsdom, globals, setup file) + VitePWA (autoUpdate, manifest, precache, NetworkFirst `wissel-api` cache for the API hosts)
+- `pwa-assets.config.ts` � `@vite-pwa/assets-generator` config (minimal2023 preset, apricot maskable/apple bg); run `npm run icons`
+- `public/` � `icon.svg` (source icon) + generated favicon.ico, apple-touch-icon-180x180, pwa-64/192/512, maskable-icon-512 PNGs
 - `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json` — strict TS; `@/*` path alias (keep in sync with vite.config.ts)
 - `eslint.config.js` — ESLint flat config from the Vite React TS template
 - `.prettierrc`, `.prettierignore` — Prettier settings; Markdown is excluded so docs keep their hand formatting
 - `index.html` — HTML entry: lang, viewport-fit=cover, theme-color (light/dark), apple-mobile-web-app tags, title
-- `src/main.tsx` — bootstrap: imports global.css, mounts `<AppProviders><App /></AppProviders>`; PWA registration goes here (task 6)
+- `src/main.tsx` — bootstrap: imports global.css, mounts `<AppProviders><App /></AppProviders>`, registers the service worker (`registerSW({ immediate: true })`)
 - `src/App.tsx` — layout shell: `.app` > `.layout` grid with Header, ConverterCard, MarketsSection; SettingsSheet (owns its open state)
-- `src/vite-env.d.ts` — Vite client types
+- `src/vite-env.d.ts` — Vite client + `vite-plugin-pwa/client` types
 - `src/styles/tokens.css` — all SPEC §8 design tokens (light, dark via media query and `data-theme`); change only with the spec
 - `src/styles/global.css` — reset, body font, `.app`/`.layout` grid and breakpoints, safe areas, hinge, reduced motion
 - `src/lib/` — pure helpers (no React/DOM), each with a `*.test.ts` next to it
