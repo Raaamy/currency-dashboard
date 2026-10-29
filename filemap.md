@@ -13,7 +13,7 @@ One line per entry: `path — what / when to touch`.
 - `eslint.config.js` — ESLint flat config from the Vite React TS template
 - `.prettierrc`, `.prettierignore` — Prettier settings; Markdown is excluded so docs keep their hand formatting
 - `index.html` — HTML entry: lang, viewport-fit=cover, theme-color (light/dark), apple-mobile-web-app tags, title
-- `src/main.tsx` — bootstrap: imports global.css, mounts `<App />`; PWA registration goes here (task 6)
+- `src/main.tsx` — bootstrap: imports global.css, mounts `<AppProviders><App /></AppProviders>`; PWA registration goes here (task 6)
 - `src/App.tsx` — layout shell: `.app` > `.layout` grid with Header, ConverterCard, MarketsSection; SettingsSheet
 - `src/vite-env.d.ts` — Vite client types
 - `src/styles/tokens.css` — all SPEC §8 design tokens (light, dark via media query and `data-theme`); change only with the spec
@@ -21,7 +21,21 @@ One line per entry: `path — what / when to touch`.
 - `src/lib/` — pure helpers (no React/DOM), each with a `*.test.ts` next to it
 - `src/lib/currencies.ts` — `CurrencyCode`, `Currency`, `CURRENCIES` (EUR, USD, GBP, AED); touch to add a currency
 - `src/lib/currencies.test.ts` — sanity test for the currency list
-- `src/test/setup.ts` — Vitest setup (jest-dom matchers)
+- `src/lib/money.ts` — convert, parseAmount, roundTo, formatMoney/Number/Quantity/Timestamp/Percent, ozToGram/gramToOz, quantityFor (+ `money.test.ts`)
+- `src/lib/storage.ts` — readJSON/writeJSON/removeKey on localStorage under `wissel.*`, errors swallowed (+ `storage.test.ts`)
+- `src/i18n/locale.ts` — pure `Language`, `localeFor`, `detectLanguage` (lets lib/money import them without React)
+- `src/i18n/nl.ts`, `src/i18n/en.ts` — SPEC §8 copy; `MessageKey` = keys of `nl`; add a key to both
+- `src/i18n/index.ts` — `t(language, key, params)`, `useT()`, re-exports the locale helpers (+ `index.test.tsx`)
+- `src/data/http.ts` — the only `fetch` caller: `fetchJson` with 8 s AbortController timeout, `FetchError`, shape guards
+- `src/data/rates.ts` — open.er-api fetch, `wissel.rates` cache, `isFresh` (6 h), cache-aware `getRates` (+ `rates.test.ts`)
+- `src/data/markets.ts` — BTC (CoinGecko -> Coinbase), XAU/XAG (gold-api), `fetchMarkets`, `wissel.markets` cache (+ `markets.test.ts`)
+- `src/data/usePolling.ts` — interval hook: runs on mount, pauses while hidden, runs again on visible (+ `usePolling.test.ts`)
+- `src/data/index.ts` — re-exports `useRates`, `useMarkets`, `useRefreshAll` and the data types for components
+- `src/state/SettingsContext.tsx` — language/theme/base/amount persisted to `wissel.settings`; applies `data-theme`, `<html lang>`, theme-color metas (+ test)
+- `src/state/DataContext.tsx` — single owner of fetching and polling; `useRates`, `useMarkets`, `useRefreshAll` (+ test)
+- `src/state/AppProviders.tsx` — Settings + Data providers; tests pass `initialSettings` (storage not read) and `initialData` (no fetch, no polling)
+- `src/test/mockFetch.ts` — `mockFetch(routes)` URL-substring fetch mock and a sample open.er-api body, for tests
+- `src/test/setup.ts` — Vitest setup (jest-dom matchers, clears localStorage after each test)
 - `src/components/Header/` — Header (placeholder card until task 5)
 - `src/components/Converter/` — ConverterCard (placeholder card until task 3)
 - `src/components/Markets/` — MarketsSection (placeholder card until task 4)

@@ -1,0 +1,33 @@
+import type { MessageKey } from './nl';
+
+/** English copy, SPEC §8 "Copy (nl / en)". Must have exactly the keys of `nl`. */
+export const en: Record<MessageKey, string> = {
+  convert: 'Convert',
+  markets: 'Markets',
+  updated: 'Rates updated {time}',
+  live: 'live · {ago}',
+  'ago.s': '{n}s ago',
+  'ago.m': '{n} min ago',
+  offline: 'Offline, showing last rates',
+  perOunce: 'per troy ounce',
+  perGram: 'per gram',
+  perBitcoin: 'per bitcoin',
+  approxOz: '≈ {n} oz',
+  refresh: 'Refresh',
+  settings: 'Settings',
+  close: 'Close',
+  language: 'Language',
+  'lang.nl': 'Nederlands',
+  'lang.en': 'English',
+  appearance: 'Appearance',
+  'theme.system': 'System',
+  'theme.light': 'Light',
+  'theme.dark': 'Dark',
+  'cur.EUR': 'Euro',
+  'cur.USD': 'US dollar',
+  'cur.GBP': 'British pound',
+  'cur.AED': 'UAE dirham',
+  'asset.BTC': 'Bitcoin',
+  'asset.XAU': 'Gold',
+  'asset.XAG': 'Silver',
+};
