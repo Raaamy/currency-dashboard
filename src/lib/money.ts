@@ -21,8 +21,11 @@ export function convert(
  * - Spaces, currency symbols and letters are stripped.
  * - Both `,` and `.` present: the last one in the string is the decimal separator, the
  *   other is a thousands separator (the decimal one may then appear only once).
- * - Only one kind, appearing once: decimal separator. Note `1.234` is ambiguous and is
- *   deliberately read as 1.234 (decimal), not 1234.
+ * - Only one kind, appearing once: a thousands separator when it is preceded by 1 to 3
+ *   digits with a non-zero value and followed by exactly 3 digits (`1.234` = 1234,
+ *   `1,234` = 1234, `12.500` = 12500, `999,000` = 999000); otherwise the decimal
+ *   separator (`1,5` = 1.5, `0.500` = 0.5, `1234.567` = 1234.567, `1,2345` = 1.2345,
+ *   `,500` = 0.5). Nobody types three decimals into a currency amount.
  * - Only one kind, appearing more than once: thousands separator (`1.234.567` = 1234567).
  * - Trailing (`12,`) and leading (`,5`) separators are allowed.
  * Returns `null` for empty, non-numeric or negative input.
@@ -43,7 +46,9 @@ export function parseAmount(text: string): number | null {
     if ((decimal === ',' ? commas : dots) > 1) return null;
     normalised = cleaned.split(thousands).join('').replace(decimal, '.');
   } else if (commas + dots === 1) {
-    normalised = cleaned.replace(',', '.');
+    const grouped = /^(\d{1,3})[.,]\d{3}$/.exec(cleaned);
+    normalised =
+      grouped && Number(grouped[1]) !== 0 ? cleaned.replace(/[.,]/, '') : cleaned.replace(',', '.');
   } else {
     normalised = cleaned.replace(/[.,]/g, '');
   }

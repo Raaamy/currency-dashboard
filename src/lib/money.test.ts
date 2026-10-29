@@ -36,7 +36,6 @@ describe('parseAmount', () => {
     ['1,234.56', 1234.56],
     ['1,5', 1.5],
     ['1.5', 1.5],
-    ['1.234', 1.234], // ambiguous single separator: decimal by design
     ['1.234.567', 1234567],
     ['1,234,567', 1234567],
     ['1.234.567,89', 1234567.89],
@@ -59,6 +58,30 @@ describe('parseAmount', () => {
       expect(parseAmount(input)).toBeNull();
     },
   );
+
+  it.each([
+    ['1.234', 1234],
+    ['1,234', 1234],
+    ['12.500', 12500],
+    ['999,000', 999000],
+    ['€ 1.234', 1234],
+  ])(
+    'reads a single separator before exactly 3 digits as thousands: %j -> %d',
+    (input, expected) => {
+      expect(parseAmount(input)).toBe(expected);
+    },
+  );
+
+  it.each([
+    ['1,5', 1.5],
+    ['0.500', 0.5],
+    ['1234.567', 1234.567],
+    ['1.23', 1.23],
+    ['1,2345', 1.2345],
+    [',500', 0.5],
+  ])('otherwise reads a single separator as decimal: %j -> %d', (input, expected) => {
+    expect(parseAmount(input)).toBeCloseTo(expected, 10);
+  });
 
   it('rejects a repeated decimal separator when both kinds appear', () => {
     expect(parseAmount('1.234,56,7')).toBeNull();
