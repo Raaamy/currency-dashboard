@@ -14,7 +14,7 @@ One line per entry: `path — what / when to touch`.
 - `.prettierrc`, `.prettierignore` — Prettier settings; Markdown is excluded so docs keep their hand formatting
 - `index.html` — HTML entry: lang, viewport-fit=cover, theme-color (light/dark), apple-mobile-web-app tags, title
 - `src/main.tsx` — bootstrap: imports global.css, mounts `<AppProviders><App /></AppProviders>`; PWA registration goes here (task 6)
-- `src/App.tsx` — layout shell: `.app` > `.layout` grid with Header, ConverterCard, MarketsSection; SettingsSheet
+- `src/App.tsx` — layout shell: `.app` > `.layout` grid with Header, ConverterCard, MarketsSection; SettingsSheet (owns its open state)
 - `src/vite-env.d.ts` — Vite client types
 - `src/styles/tokens.css` — all SPEC §8 design tokens (light, dark via media query and `data-theme`); change only with the spec
 - `src/styles/global.css` — reset, body font, `.app`/`.layout` grid and breakpoints, safe areas, hinge, reduced motion
@@ -36,7 +36,15 @@ One line per entry: `path — what / when to touch`.
 - `src/state/AppProviders.tsx` — Settings + Data providers; tests pass `initialSettings` (storage not read) and `initialData` (no fetch, no polling)
 - `src/test/mockFetch.ts` — `mockFetch(routes)` URL-substring fetch mock and a sample open.er-api body, for tests
 - `src/test/setup.ts` — Vitest setup (jest-dom matchers, clears localStorage after each test)
-- `src/components/Header/` — Header (placeholder card until task 5)
+- `src/components/Header/` — Header: brand, refresh button + "updated" caption, settings button (`onOpenSettings`)
 - `src/components/Converter/` — ConverterCard (placeholder card until task 3)
-- `src/components/Markets/` — MarketsSection (placeholder card until task 4)
-- `src/components/Settings/` — SettingsSheet (renders null until task 5)
+- `src/components/Converter/ConverterCard.tsx` — converter card: micro label, four CurrencyRows, conversion, focus-on-row-tap (+ `ConverterCard.test.tsx`)
+- `src/components/Converter/CurrencyRow.tsx` — one row: active = label + amount input, inactive = whole-row button; empty-state shimmer
+- `src/components/ui/Card.tsx` — `<section>` surface: `--surface`, `--radius-card`, `--shadow-card`, padding 20
+- `src/components/ui/SymbolBadge.tsx` — tinted 36/38/40 px circle with a glyph (`tint`: eur/usd/gbp/aed/btc/gold/silver), aria-hidden
+- `src/components/Markets/MarketsSection.tsx` — markets heading (LiveDot, "live · n s geleden" ticking every 10 s, offline glyph when stale) and the three tiles (+ `MarketsSection.test.tsx`)
+- `src/components/Markets/MarketTile.tsx` — one asset row: badge, unit price captions in base currency, quantity the amount buys, change pill / ≈ oz caption, shimmer when data missing
+- `src/components/ui/Pill.tsx` — rounded pill, variants up/down/neutral (24 h change)
+- `src/components/ui/LiveDot.tsx` — 6 px pulsing status dot; `muted` = grey, no pulse
+- `src/components/Settings/SettingsSheet.tsx` — native `<dialog>` settings sheet (bottom sheet < 640 px, centred above); language + appearance (+ `SettingsSheet.test.tsx`, covers Header too)
+- `src/components/Settings/Segmented.tsx` — generic radio-group segmented control with sliding thumb

@@ -22,7 +22,7 @@ title "Wissel". Scripts: `dev`, `build`, `preview`, `lint`, `format`, `test`,
 Verify: `npm run build && npm run lint && npm test` pass (one trivial test), `npm run dev`
 serves the shell with visible placeholder cards at 390 px and 904 px.
 
-## Task 2 — Data, money and i18n libraries `[~]`  (tier: careful, deps: 1)
+## Task 2 — Data, money and i18n libraries `[x]`  (tier: careful, deps: 1)
 
 Implement `lib/money.ts` (convert, parseAmount, formatMoney, formatNumber, ozToGram,
 quantityFor, formatQuantity), `lib/storage.ts`, `data/rates.ts`, `data/markets.ts`,
@@ -37,7 +37,7 @@ quantity ratio and BTC/gram quantity formatting rules), for the cache/stale logi
 timeout), for the CoinGecko->Coinbase fallback, for the theme attribute application, and
 for the i18n `t()` with placeholders. `npm test`, `npm run lint`, `npm run build` pass.
 
-## Task 3 — Converter card `[ ]`  (tier: careful, deps: 2, parallel with 4 and 5)
+## Task 3 — Converter card `[x]`  (tier: careful, deps: 2, parallel with 4 and 5)
 
 Build `components/Converter/*` and `components/ui/{Card,SymbolBadge}` exactly per SPEC
 §8 "Converter card" and flows §7.2-7.3, using the hooks from task 2. Only touch files
@@ -51,7 +51,7 @@ Verify: component test (typing `1.234,56` with base EUR shows the three other am
 formatted per language; tapping USD row makes it active and keeps text). Manual check at
 390 and 904 px. Lint/build/test pass.
 
-## Task 4 — Markets tiles `[ ]`  (tier: medium, deps: 2, parallel with 3 and 5)
+## Task 4 — Markets tiles `[x]`  (tier: medium, deps: 2, parallel with 3 and 5)
 
 Build `components/Markets/*` and `components/ui/{Pill,LiveDot}` per SPEC §8 "Markets
 section", using `useMarkets()`, `useRates()` and settings (base, amount) from task 2.
@@ -65,7 +65,7 @@ Verify: component test (given mocked quotes, rates and amount `1250` in base EUR
 show the expected quantities and prices; with empty amount quantities show `0`).
 Manual check at 390 and 904 px. Lint/build/test pass.
 
-## Task 5 — Header and settings sheet `[ ]`  (tier: medium, deps: 2, parallel with 3 and 4)
+## Task 5 — Header and settings sheet `[x]`  (tier: medium, deps: 2, parallel with 3 and 4)
 
 Build `components/Header/*` and `components/Settings/*` (SettingsSheet, Segmented) per
 SPEC §8 "Header" and "Settings sheet" and flow §7.5-7.6, using settings and `refresh`
@@ -78,7 +78,7 @@ Verify: component test (opening the sheet and choosing English changes the heade
 caption language; choosing Dark sets `data-theme="dark"` on `<html>`). Manual check at
 390 and 904 px. Lint/build/test pass.
 
-## Task 6 — PWA, icons, iOS docs `[ ]`  (tier: light, deps: 3, 4, 5)
+## Task 6 — PWA, icons, iOS docs `[~]`  (tier: light, deps: 3, 4, 5)
 
 Add `public/icon.svg` (soft apricot rounded square, white "W" in Nunito-like geometry),
 generate the icon set with `@vite-pwa/assets-generator`, configure `vite-plugin-pwa`

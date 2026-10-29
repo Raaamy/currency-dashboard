@@ -1,12 +1,41 @@
-/* Placeholder card (task 1); replaced when MarketsSection is built. Tokens only. */
-.card {
-  min-height: 240px;
-  padding: 20px;
-  background: var(--surface);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-  color: var(--text-2);
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 4px;
+}
+
+.label {
   font: var(--font-micro);
   letter-spacing: var(--tracking-micro);
   text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.cloudOff {
+  flex: none;
+  color: var(--text-2);
+}
+
+.caption {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: var(--font-caption);
+  color: var(--text-2);
+}
+
+.tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }

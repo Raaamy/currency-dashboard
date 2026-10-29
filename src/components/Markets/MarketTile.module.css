@@ -1,0 +1,98 @@
+/* Tile card styling written here because ui/Card does not exist yet (tokens only). */
+.tile {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: calc(var(--radius-row) + 4px);
+  box-shadow: var(--shadow-card);
+}
+
+/* Badge: own minimal styles because ui/SymbolBadge does not exist yet. */
+.badge {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--text);
+  font: 800 18px / 1 var(--font-family);
+}
+
+.badgeBTC {
+  background: var(--tint-btc);
+}
+
+.badgeXAU {
+  background: var(--tint-gold);
+}
+
+.badgeXAG {
+  background: var(--tint-silver);
+}
+
+.texts {
+  min-width: 0;
+}
+
+.name {
+  font: var(--font-row);
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caption {
+  display: block;
+  font: var(--font-caption);
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.numbers {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
+}
+
+.quantity {
+  font: 800 20px / 24px var(--font-family);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--text-2);
+}
+
+.dim {
+  opacity: 0.7;
+}
+
+/* Missing quote or rates: soft shimmer sweep. */
+.loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--line), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 1.4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}

@@ -1,0 +1,23 @@
+.pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  font: var(--font-caption);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.up {
+  background: var(--up-soft);
+  color: var(--up);
+}
+
+.down {
+  background: var(--down-soft);
+  color: var(--down);
+}
+
+.neutral {
+  background: var(--line);
+  color: var(--text-2);
+}
