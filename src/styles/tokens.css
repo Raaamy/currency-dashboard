@@ -1,0 +1,105 @@
+/* Design tokens — the only source of colors, radii, shadows, type and motion (SPEC §8).
+   Light on :root; dark via system preference (unless data-theme="light") or data-theme="dark". */
+
+:root {
+  color-scheme: light;
+
+  /* Colors */
+  --bg: #f6f3ee;
+  --surface: #ffffff;
+  --surface-2: #fbf1e8;
+  --text: #2b2824;
+  --text-2: #8a827a;
+  --line: rgba(43, 40, 36, 0.07);
+  --accent: #e59a66;
+  --accent-soft: #fbeadf;
+  --up: #4f9e78;
+  --up-soft: #e4f2ea;
+  --down: #d47a7a;
+  --down-soft: #f9e6e6;
+
+  /* Badge tints */
+  --tint-eur: #e7ecf8;
+  --tint-usd: #e4f2ea;
+  --tint-gbp: #f3e6f2;
+  --tint-aed: #fbeadf;
+  --tint-btc: #fde7d3;
+  --tint-gold: linear-gradient(135deg, #f7e3a1, #e9c25a);
+  --tint-silver: linear-gradient(135deg, #eef0f3, #c9cfd8);
+
+  /* Shape */
+  --radius-card: 24px;
+  --radius-row: 16px;
+  --radius-pill: 999px;
+  --shadow-card: 0 10px 30px rgba(43, 40, 36, 0.06);
+
+  /* Type scale: size / line-height / weight */
+  --font-family: 'Nunito Variable', system-ui, sans-serif;
+  --font-display: 800 40px / 44px var(--font-family);
+  --font-title: 800 22px / 28px var(--font-family);
+  --font-row: 600 17px / 22px var(--font-family);
+  --font-amount: 700 20px / 24px var(--font-family);
+  --font-caption: 500 13px / 18px var(--font-family);
+  --font-micro: 600 11px / 14px var(--font-family);
+  --tracking-micro: 0.04em;
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur: 200ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --bg: #1c1a18;
+    --surface: #272421;
+    --surface-2: #332a22;
+    --text: #f3efe9;
+    --text-2: #a49c92;
+    --line: rgba(255, 255, 255, 0.07);
+    --accent: #efae7e;
+    --accent-soft: #3d2e22;
+    --up: #7cc7a1;
+    --up-soft: #1f352b;
+    --down: #e79a9a;
+    --down-soft: #3a2626;
+
+    --tint-eur: #283046;
+    --tint-usd: #1f352b;
+    --tint-gbp: #36283a;
+    --tint-aed: #3d2e22;
+    --tint-btc: #45301c;
+    --tint-gold: linear-gradient(135deg, #d8b24e, #9a7a2c);
+    --tint-silver: linear-gradient(135deg, #c3c9d2, #7e8792);
+
+    --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #1c1a18;
+  --surface: #272421;
+  --surface-2: #332a22;
+  --text: #f3efe9;
+  --text-2: #a49c92;
+  --line: rgba(255, 255, 255, 0.07);
+  --accent: #efae7e;
+  --accent-soft: #3d2e22;
+  --up: #7cc7a1;
+  --up-soft: #1f352b;
+  --down: #e79a9a;
+  --down-soft: #3a2626;
+
+  --tint-eur: #283046;
+  --tint-usd: #1f352b;
+  --tint-gbp: #36283a;
+  --tint-aed: #3d2e22;
+  --tint-btc: #45301c;
+  --tint-gold: linear-gradient(135deg, #d8b24e, #9a7a2c);
+  --tint-silver: linear-gradient(135deg, #c3c9d2, #7e8792);
+
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.35);
+}

@@ -1,0 +1,12 @@
+/* Placeholder card (task 1); replaced when ConverterCard is built. Tokens only. */
+.card {
+  min-height: 320px;
+  padding: 20px;
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  color: var(--text-2);
+  font: var(--font-micro);
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+}

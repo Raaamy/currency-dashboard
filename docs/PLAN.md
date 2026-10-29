@@ -3,7 +3,7 @@
 Status legend: `[ ]` pending · `[~]` in progress · `[x]` accepted.
 Every brief references `docs/SPEC.md` by section instead of restating it.
 
-## Task 1 — Scaffold `[ ]`  (tier: medium, deps: none, nothing runs in parallel)
+## Task 1 — Scaffold `[x]`  (tier: medium, deps: none, nothing runs in parallel)
 
 Create the Vite + React + TypeScript project per SPEC §3/§4 in the repo root. Install
 deps (`@fontsource-variable/nunito`, `vite-plugin-pwa`; dev: vitest, jsdom,
@@ -22,7 +22,7 @@ title "Wissel". Scripts: `dev`, `build`, `preview`, `lint`, `format`, `test`,
 Verify: `npm run build && npm run lint && npm test` pass (one trivial test), `npm run dev`
 serves the shell with visible placeholder cards at 390 px and 904 px.
 
-## Task 2 — Data, money and i18n libraries `[ ]`  (tier: careful, deps: 1)
+## Task 2 — Data, money and i18n libraries `[~]`  (tier: careful, deps: 1)
 
 Implement `lib/money.ts` (convert, parseAmount, formatMoney, formatNumber, ozToGram,
 quantityFor, formatQuantity), `lib/storage.ts`, `data/rates.ts`, `data/markets.ts`,
