@@ -1,4 +1,7 @@
+/* `markets` size container: the tiles grid follows the section width, not the viewport
+   (SPEC §8 "Responsive / foldable"). */
 .section {
+  container: markets / inline-size;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -28,8 +31,17 @@
   color: var(--text-2);
 }
 
+/* One tile per row below 560 px of section width, two from 560 px (foldable inner screen:
+   2x2). Tiles in one row stretch to the same height. */
 .tiles {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
+  align-items: stretch;
+}
+
+@container markets (min-width: 560px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

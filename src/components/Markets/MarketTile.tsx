@@ -60,7 +60,7 @@ export function MarketTile({ id, stale = false }: MarketTileProps) {
     pct === null || pct === undefined ? null : (
       <Pill
         variant={pillVariant(pct)}
-        className={stale ? styles.dim : undefined}
+        className={stale ? `${styles.pill} ${styles.dim}` : styles.pill}
         title={t('sinceYesterday')}
         aria-label={`${formatPercent(pct)} ${t('sinceYesterday')}`}
       >
@@ -83,7 +83,13 @@ export function MarketTile({ id, stale = false }: MarketTileProps) {
       quantity = `${formatQuantity(ozToGram(qty), 'gram')} g`;
       below = (
         <div className={styles.metalRow}>
-          <span className={stale ? `${styles.caption} ${styles.dim}` : styles.caption}>
+          <span
+            className={
+              stale
+                ? `${styles.caption} ${styles.extra} ${styles.dim}`
+                : `${styles.caption} ${styles.extra}`
+            }
+          >
             {t('approxOz', { n: formatQuantity(qty, 'oz') })}
           </span>
           {changePill(snapshotChange)}
@@ -93,10 +99,12 @@ export function MarketTile({ id, stale = false }: MarketTileProps) {
   } else {
     captions.push(DASH);
     if (!isBtc) captions.push(DASH);
-    below = <span className={styles.caption}>{DASH}</span>;
+    below = <span className={`${styles.caption} ${styles.extra}`}>{DASH}</span>;
   }
 
-  const tileClass = ready ? tileStyles.tile : `${tileStyles.tile} ${tileStyles.loading}`;
+  const tileClass = [tileStyles.tile, tileStyles.asset, ready ? '' : tileStyles.loading]
+    .filter(Boolean)
+    .join(' ');
   const numberClass = [
     styles.quantity,
     ready && empty ? styles.muted : '',
@@ -106,24 +114,29 @@ export function MarketTile({ id, stale = false }: MarketTileProps) {
     .join(' ');
 
   return (
-    <article className={tileClass} data-asset={id} aria-busy={!ready || undefined}>
-      <span className={`${styles.badge} ${styles[`badge${id}`]}`} aria-hidden="true">
-        {isBtc ? '₿' : null}
-      </span>
-      <div className={styles.texts}>
-        <h3 className={styles.name}>{t(`asset.${id}`)}</h3>
-        {captions.map((caption, i) => (
-          <p
-            key={i}
-            className={stale && ready ? `${styles.caption} ${styles.dim}` : styles.caption}
-          >
-            {caption}
-          </p>
-        ))}
-      </div>
-      <div className={styles.numbers}>
-        <p className={numberClass}>{quantity}</p>
-        {below}
+    // Outer <article> = size container for the row/stacked layouts (tile.module.css).
+    <article className={tileStyles.cell} data-asset={id} aria-busy={!ready || undefined}>
+      <div className={tileClass}>
+        <span className={`${styles.badge} ${styles[`badge${id}`]}`} aria-hidden="true">
+          {isBtc ? '₿' : null}
+        </span>
+        <div className={styles.texts}>
+          <h3 className={styles.name}>{t(`asset.${id}`)}</h3>
+          <div className={styles.caps}>
+            {captions.map((caption, i) => (
+              <p
+                key={i}
+                className={stale && ready ? `${styles.caption} ${styles.dim}` : styles.caption}
+              >
+                {caption}
+              </p>
+            ))}
+          </div>
+        </div>
+        <div className={styles.numbers}>
+          <p className={numberClass}>{quantity}</p>
+          {below}
+        </div>
       </div>
     </article>
   );

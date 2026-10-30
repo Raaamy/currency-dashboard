@@ -11,13 +11,11 @@
   white-space: nowrap;
 }
 
+/* "Exchange rate" may wrap to two lines in a narrow row tile rather than be cut off. */
 .caption {
   display: block;
   font: var(--font-caption);
   color: var(--text-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .lines {
@@ -63,4 +61,48 @@
 
 .change[data-dir='down'] {
   color: var(--down);
+}
+
+/* Stacked layout (tile < 340 px, SPEC §8 "Responsive / foldable"): header line, then the
+   three lines full width as a 3-column grid (value right-aligned, code, change right). */
+@container tile (max-width: 339.98px) {
+  /* Doubled class: beats SymbolBadge's own size class regardless of stylesheet order. */
+  .badge.badge {
+    grid-area: badge;
+    width: 32px;
+    height: 32px;
+  }
+
+  .texts {
+    grid-area: texts;
+  }
+
+  .name,
+  .caption {
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .lines {
+    grid-area: lines;
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: baseline;
+    row-gap: 2px;
+  }
+
+  .line {
+    display: contents;
+  }
+
+  /* Column 1 for every value, so each line starts a new grid row (also the "—" lines). */
+  .value {
+    grid-column: 1;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .change {
+    justify-self: end;
+  }
 }

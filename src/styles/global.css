@@ -51,7 +51,8 @@ svg {
   max-width: 100%;
 }
 
-/* Layout shell: < 640 px single column, 16 px gutters (SPEC §8 Responsive) */
+/* Layout shell (SPEC §8 "Responsive / foldable"): < 900 px single column card stack,
+   16 px gutters (24 px from 640 px). */
 .app {
   max-width: 1040px;
   margin: 0 auto;
@@ -72,7 +73,7 @@ svg {
   grid-column: 1 / -1;
 }
 
-/* >= 640 px: two columns 1.15fr 1fr, gap 24, 24 px gutters */
+/* >= 640 px: 24 px gutters (still one column: the foldable inner screen is ~680 px) */
 @media (min-width: 640px) {
   .app {
     padding-top: calc(24px + env(safe-area-inset-top));
@@ -80,7 +81,10 @@ svg {
     padding-bottom: calc(24px + env(safe-area-inset-bottom));
     padding-left: calc(24px + env(safe-area-inset-left));
   }
+}
 
+/* >= 900 px: two columns 1.15fr 1fr, gap 24 (converter left, markets right) */
+@media (min-width: 900px) {
   .layout {
     grid-template-columns: 1.15fr 1fr;
     gap: 24px;

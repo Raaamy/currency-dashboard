@@ -91,6 +91,21 @@ describe('MarketsSection', () => {
     expect(text(container)).toContain('live · 0s ago');
   });
 
+  it('renders every tile name and caption in both layouts (one DOM for row and stacked)', () => {
+    const { container } = renderSection({ amount: '10000' });
+    const expected: Record<string, string[]> = {
+      RATES: ['1 EUR', t('exchangeRate')],
+      BTC: [t('asset.BTC'), t('perBitcoin'), '0,16667 BTC'],
+      XAU: [t('asset.XAU'), t('perGram'), t('perOunce'), '≈ 2,750 oz'],
+      XAG: [t('asset.XAG'), t('perGram'), t('perOunce'), '≈ 220,00 oz'],
+    };
+    for (const [id, parts] of Object.entries(expected)) {
+      const el = tile(container, id);
+      expect(within(el).getByRole('heading', { name: parts[0] })).toBeInTheDocument();
+      for (const part of parts.slice(1)) expect(text(el)).toContain(part);
+    }
+  });
+
   it('shows zero quantities for an empty amount', () => {
     const { container } = renderSection({ amount: '' });
     expect(text(tile(container, 'BTC'))).toContain('0 BTC');

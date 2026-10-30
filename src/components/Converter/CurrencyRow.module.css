@@ -126,7 +126,8 @@ label.content {
   opacity: 1;
 }
 
-@media (min-width: 640px) {
+/* Larger input only when the converter card is >= 480 px wide (SPEC §8 "Converter rows"). */
+@container converter (min-width: 480px) {
   .input {
     font-size: 32px;
     line-height: 36px;

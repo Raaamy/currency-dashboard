@@ -43,6 +43,14 @@
   white-space: nowrap;
 }
 
+/* Row layout: unit-price captions wrap to a second line instead of being cut off
+   (e.g. "AED 14.386,33 per troy oz" on a 358 px phone tile). */
+.caps .caption {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
+
 .numbers {
   display: flex;
   flex-direction: column;
@@ -71,4 +79,53 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Stacked layout (tile < 340 px, SPEC §8 "Responsive / foldable"): the text and number
+   wrappers dissolve so their children land in the grid areas of `.asset` (tile.module.css). */
+@container tile (max-width: 339.98px) {
+  .texts,
+  .numbers,
+  .metalRow {
+    display: contents;
+  }
+
+  .badge {
+    grid-area: badge;
+    width: 32px;
+    height: 32px;
+  }
+
+  .name {
+    grid-area: name;
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .pill {
+    grid-area: pill;
+    justify-self: end;
+  }
+
+  .quantity {
+    grid-area: qty;
+    justify-self: start;
+    font: 800 22px / 26px var(--font-family);
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+  }
+
+  .caps {
+    grid-area: caps;
+  }
+
+  .extra {
+    grid-area: oz;
+  }
+
+  .caption {
+    overflow: visible;
+    text-align: left;
+    white-space: normal;
+  }
 }

@@ -133,7 +133,7 @@ Delete the settings button and sheet; English-only copy; all numbers in nl-NL no
 English dates; light/dark from the system only; settings v3 = { base, amount }. Verify:
 lint/build/test pass; browser check at 390 and 904 px in light and dark.
 
-## Task 12 — Adaptive layout, no truncation `[~]`  (tier: careful, deps: 11)
+## Task 12 — Adaptive layout, no truncation `[x]`  (tier: careful, deps: 11)
 
 Two columns only from 900 px; markets grid 1-up / 2-up by container width (560 px);
 row vs stacked tile layout by tile width (340 px) for asset and rates tiles; converter

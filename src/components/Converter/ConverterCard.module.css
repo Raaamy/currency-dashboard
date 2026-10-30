@@ -1,4 +1,9 @@
 /* Converter card contents (SPEC §8 "Converter card"). Tokens only; the Card supplies the surface. */
+/* `converter` size container: the rows size their input by the card width, not the viewport. */
+.card {
+  container: converter / inline-size;
+}
+
 .title {
   margin-bottom: 12px;
   color: var(--text-2);

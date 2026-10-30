@@ -68,7 +68,7 @@ export function ConverterCard() {
   };
 
   return (
-    <Card aria-labelledby={titleId}>
+    <Card className={styles.card} aria-labelledby={titleId}>
       <h2 id={titleId} className={styles.title}>
         {t('convert')}
       </h2>
