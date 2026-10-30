@@ -45,3 +45,22 @@
   color: var(--text-2);
   text-align: left;
 }
+
+/* Daily change after the code (SPEC §8 "Rates tile"); min-width aligns the three lines. */
+.change {
+  display: inline-block;
+  min-width: 4.2em;
+  margin-left: 8px;
+  font: 700 13px / 18px var(--font-family);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  text-align: right;
+}
+
+.change[data-dir='up'] {
+  color: var(--up);
+}
+
+.change[data-dir='down'] {
+  color: var(--down);
+}

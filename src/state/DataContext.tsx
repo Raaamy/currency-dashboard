@@ -10,6 +10,7 @@ import {
   type Context,
   type ReactNode,
 } from 'react';
+import { getHistory, isHistoryFresh, loadCachedHistory, type History } from '@/data/history';
 import { errorMessage } from '@/data/http';
 import {
   ASSET_IDS,
@@ -39,15 +40,19 @@ export interface SourceApi<T> extends SourceState<T> {
 
 export type RatesApi = SourceApi<Rates | null>;
 export type MarketsApi = SourceApi<Partial<Quotes>>;
+export type HistoryApi = SourceApi<History | null>;
 
 /** Fixed state for tests/stories. When given, the provider never fetches or polls. */
 export interface InitialData {
   rates?: Rates | null;
   quotes?: Partial<Quotes>;
+  history?: History | null;
   ratesStatus?: SourceStatus;
   marketsStatus?: SourceStatus;
+  historyStatus?: SourceStatus;
   ratesError?: string | null;
   marketsError?: string | null;
+  historyError?: string | null;
   lastRatesRefresh?: number | null;
   lastMarketsRefresh?: number | null;
 }
@@ -90,8 +95,28 @@ function initialMarkets(initialData?: InitialData): SourceState<Partial<Quotes>>
   return { data, status: hasQuotes(data) ? 'stale' : 'idle', error: null, lastRefresh: null };
 }
 
+function initialHistory(initialData?: InitialData): SourceState<History | null> {
+  if (initialData) {
+    const data = initialData.history ?? null;
+    return {
+      data,
+      status: initialData.historyStatus ?? (data ? 'ok' : 'idle'),
+      error: initialData.historyError ?? null,
+      lastRefresh: data?.fetchedAt ?? null,
+    };
+  }
+  const data = loadCachedHistory();
+  return {
+    data,
+    status: data ? (isHistoryFresh(data) ? 'ok' : 'stale') : 'idle',
+    error: null,
+    lastRefresh: data?.fetchedAt ?? null,
+  };
+}
+
 const RatesContext = createContext<RatesApi | null>(null);
 const MarketsContext = createContext<MarketsApi | null>(null);
+const HistoryContext = createContext<HistoryApi | null>(null);
 const RefreshAllContext = createContext<(() => Promise<void>) | null>(null);
 
 export interface DataProviderProps {
@@ -103,6 +128,7 @@ export function DataProvider({ children, initialData }: DataProviderProps) {
   const [fixed] = useState(() => initialData !== undefined);
   const [rates, setRates] = useState(() => initialRates(initialData));
   const [markets, setMarkets] = useState(() => initialMarkets(initialData));
+  const [history, setHistory] = useState(() => initialHistory(initialData));
 
   const ratesRef = useRef(rates.data);
   const quotesRef = useRef(markets.data);
@@ -112,9 +138,14 @@ export function DataProvider({ children, initialData }: DataProviderProps) {
   useEffect(() => {
     quotesRef.current = markets.data;
   }, [markets.data]);
+  const historyRef = useRef(history.data);
+  useEffect(() => {
+    historyRef.current = history.data;
+  }, [history.data]);
 
   const ratesInFlight = useRef<Promise<void> | null>(null);
   const marketsInFlight = useRef<Promise<void> | null>(null);
+  const historyInFlight = useRef<Promise<void> | null>(null);
 
   const runRates = useCallback(
     (force: boolean): Promise<void> => {
@@ -143,6 +174,38 @@ export function DataProvider({ children, initialData }: DataProviderProps) {
           ratesInFlight.current = null;
         });
       ratesInFlight.current = promise;
+      return promise;
+    },
+    [fixed],
+  );
+
+  const runHistory = useCallback(
+    (force: boolean): Promise<void> => {
+      if (fixed) return Promise.resolve();
+      if (historyInFlight.current) return historyInFlight.current;
+      const now = Date.now() + RATES_REFRESH_SLACK_MS;
+      const current = historyRef.current;
+      if (!force && current && isHistoryFresh(current, now)) return Promise.resolve();
+
+      setHistory((s) => ({ ...s, status: 'loading' }));
+      const promise = getHistory({ force, now, cached: current })
+        .then((result) => {
+          if (result.source === 'network' && result.data) {
+            const data = result.data;
+            historyRef.current = data;
+            setHistory({ data, status: 'ok', error: null, lastRefresh: data.fetchedAt });
+          } else {
+            setHistory((s) => ({
+              ...s,
+              status: s.data ? 'stale' : 'idle',
+              error: result.error,
+            }));
+          }
+        })
+        .finally(() => {
+          historyInFlight.current = null;
+        });
+      historyInFlight.current = promise;
       return promise;
     },
     [fixed],
@@ -180,15 +243,20 @@ export function DataProvider({ children, initialData }: DataProviderProps) {
     return promise;
   }, [fixed]);
 
-  // Rates: on mount and when visible again only if not fresh (SPEC §6); every 6 h while visible.
-  usePolling(() => runRates(false), RATES_MAX_AGE_MS, !fixed);
+  // Rates and daily snapshots: on mount and when visible again only if not fresh (SPEC §6);
+  // every 6 h while visible.
+  usePolling(
+    () => Promise.all([runRates(false), runHistory(false)]).then(() => undefined),
+    RATES_MAX_AGE_MS,
+    !fixed,
+  );
   // Markets: on mount, every 60 s while visible, immediately when visible again.
   usePolling(runMarkets, MARKETS_POLL_MS, !fixed);
 
   const refreshRates = useCallback(() => runRates(true), [runRates]);
   const refreshAll = useCallback(
-    () => Promise.all([runRates(true), runMarkets()]).then(() => undefined),
-    [runRates, runMarkets],
+    () => Promise.all([runRates(true), runHistory(true), runMarkets()]).then(() => undefined),
+    [runRates, runHistory, runMarkets],
   );
 
   const ratesValue = useMemo<RatesApi>(
@@ -199,11 +267,18 @@ export function DataProvider({ children, initialData }: DataProviderProps) {
     () => ({ ...markets, refresh: runMarkets }),
     [markets, runMarkets],
   );
+  const refreshHistory = useCallback(() => runHistory(true), [runHistory]);
+  const historyValue = useMemo<HistoryApi>(
+    () => ({ ...history, refresh: refreshHistory }),
+    [history, refreshHistory],
+  );
 
   return (
     <RefreshAllContext.Provider value={refreshAll}>
       <RatesContext.Provider value={ratesValue}>
-        <MarketsContext.Provider value={marketsValue}>{children}</MarketsContext.Provider>
+        <MarketsContext.Provider value={marketsValue}>
+          <HistoryContext.Provider value={historyValue}>{children}</HistoryContext.Provider>
+        </MarketsContext.Provider>
       </RatesContext.Provider>
     </RefreshAllContext.Provider>
   );
@@ -225,7 +300,12 @@ export function useMarkets(): MarketsApi {
   return useRequired(MarketsContext, 'useMarkets');
 }
 
-/** Refreshes rates (ignoring freshness) and markets together. */
+/** Daily EUR snapshots (latest + previous day) for "vs yesterday"; `refresh()` fetches now. */
+export function useHistory(): HistoryApi {
+  return useRequired(HistoryContext, 'useHistory');
+}
+
+/** Refreshes rates and daily snapshots (ignoring freshness) and markets together. */
 export function useRefreshAll(): () => Promise<void> {
   return useRequired(RefreshAllContext, 'useRefreshAll');
 }

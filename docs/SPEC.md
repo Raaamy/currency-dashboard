@@ -286,7 +286,7 @@ trapped in the dialog; Escape and backdrop click close it.
 | live | live · {ago} | live · {ago} |
 | ago.s / ago.m | {n} s geleden / {n} min geleden | {n}s ago / {n} min ago |
 | offline | Geen verbinding, laatste koersen | Offline, showing last rates |
-| perOunce | per troy ounce | per troy ounce |
+| perOunce | per troy oz | per troy oz |
 | perGram | per gram | per gram |
 | perBitcoin | per bitcoin | per bitcoin |
 | exchangeRate | Wisselkoers | Exchange rate |

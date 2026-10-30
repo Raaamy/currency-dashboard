@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { AssetId } from '@/data';
-import { useMarkets, useRates } from '@/data';
+import { useHistory, useMarkets, useRates } from '@/data';
 import { useT } from '@/i18n';
 import {
   convert,
@@ -11,6 +11,8 @@ import {
   ozToGram,
   parseAmount,
   quantityFor,
+  rateChangePct,
+  roundTo,
 } from '@/lib/money';
 import { useSettings } from '@/state/SettingsContext';
 import { Pill, type PillVariant } from '@/components/ui/Pill';
@@ -25,7 +27,11 @@ export interface MarketTileProps {
 
 const DASH = '—';
 
-const pillVariant = (pct: number): PillVariant => (pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral');
+/** Variant of the change as displayed (1 decimal), so `0,0%` stays neutral. */
+const pillVariant = (pct: number): PillVariant => {
+  const shown = roundTo(pct, 1);
+  return shown > 0 ? 'up' : shown < 0 ? 'down' : 'neutral';
+};
 
 /** One asset row: badge, name + unit price captions, quantity the typed amount buys. */
 export function MarketTile({ id, stale = false }: MarketTileProps) {
@@ -33,6 +39,7 @@ export function MarketTile({ id, stale = false }: MarketTileProps) {
   const { language, base, amount } = useSettings();
   const { data: rates } = useRates();
   const { data: quotes } = useMarkets();
+  const { data: history } = useHistory();
   const quote = quotes[id];
   const ready = rates !== null && quote !== undefined;
 
@@ -45,6 +52,22 @@ export function MarketTile({ id, stale = false }: MarketTileProps) {
   let quantity = DASH;
   let below: ReactNode = null;
 
+  // Daily-snapshot change of the asset's price in the base currency (SPEC §6 "Daily change").
+  const snapshotChange = history
+    ? rateChangePct(history.today.rates, history.previous.rates, id, base)
+    : null;
+  const changePill = (pct: number | null | undefined): ReactNode =>
+    pct === null || pct === undefined ? null : (
+      <Pill
+        variant={pillVariant(pct)}
+        className={stale ? styles.dim : undefined}
+        title={t('sinceYesterday')}
+        aria-label={`${formatPercent(pct, language)} ${t('sinceYesterday')}`}
+      >
+        {formatPercent(pct, language)}
+      </Pill>
+    );
+
   if (ready) {
     const priceInBase = convert(quote.priceUsd, 'USD', base, rates.rates);
     const qty = quantityFor(value, base, quote.priceUsd, rates.rates);
@@ -53,14 +76,7 @@ export function MarketTile({ id, stale = false }: MarketTileProps) {
         `${formatMoney(priceInBase, base, language, { decimals: 0 })} ${t('perBitcoin')}`,
       );
       quantity = `${formatQuantity(qty, 'btc', language)} BTC`;
-      const pct = quote.change24hPct;
-      if (pct !== undefined) {
-        below = (
-          <Pill variant={pillVariant(pct)} className={stale ? styles.dim : undefined}>
-            {formatPercent(pct, language)}
-          </Pill>
-        );
-      }
+      below = changePill(quote.change24hPct ?? snapshotChange);
     } else {
       const perOunce = priceInBase;
       const perGram = perOunce / OZ_IN_GRAMS;
@@ -68,9 +84,12 @@ export function MarketTile({ id, stale = false }: MarketTileProps) {
       captions.push(`${formatMoney(perOunce, base, language)} ${t('perOunce')}`);
       quantity = `${formatQuantity(ozToGram(qty), 'gram', language)} g`;
       below = (
-        <span className={stale ? `${styles.caption} ${styles.dim}` : styles.caption}>
-          {t('approxOz', { n: formatQuantity(qty, 'oz', language) })}
-        </span>
+        <div className={styles.metalRow}>
+          <span className={stale ? `${styles.caption} ${styles.dim}` : styles.caption}>
+            {t('approxOz', { n: formatQuantity(qty, 'oz', language) })}
+          </span>
+          {changePill(snapshotChange)}
+        </div>
       );
     }
   } else {

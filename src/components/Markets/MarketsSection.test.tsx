@@ -1,4 +1,5 @@
 import { act, render, screen, within } from '@testing-library/react';
+import type { History } from '@/data';
 import type { InitialData } from '@/state/DataContext';
 import { AppProviders } from '@/state/AppProviders';
 import type { Settings } from '@/state/SettingsContext';
@@ -43,6 +44,29 @@ const tile = (container: HTMLElement, id: string): HTMLElement => {
   return el;
 };
 
+const MINUS = '−';
+/** Plain spaces and an ASCII minus, so expectations can be typed. */
+const plain = (el: Element): string => text(el).split(MINUS).join('-');
+
+const HISTORY: History = {
+  today: {
+    date: '2026-10-28',
+    rates: { eur: 1, usd: 1.1, gbp: 0.85, aed: 4, xau: 0.00025, xag: 0.02, btc: 0.00001 },
+  },
+  previous: {
+    date: '2026-10-27',
+    rates: { eur: 1, usd: 1.0, gbp: 0.85, aed: 4.2, xau: 0.0002, xag: 0.02, btc: 0.00002 },
+  },
+  fetchedAt: now,
+};
+
+const changeSpans = (el: HTMLElement) =>
+  Array.from(el.querySelectorAll<HTMLElement>('span[data-dir]')).map((s) => ({
+    text: plain(s),
+    dir: s.dataset.dir,
+    title: s.title,
+  }));
+
 describe('MarketsSection', () => {
   it('shows quantities, unit prices and the change pill for 1250 EUR', () => {
     const { container } = renderSection();
@@ -58,7 +82,7 @@ describe('MarketsSection', () => {
     expect(gold).toContain('10,69 g');
     expect(gold).toContain('≈ 0,344 oz');
     expect(gold).toContain('per gram');
-    expect(gold).toContain('per troy ounce');
+    expect(gold).toContain('per troy oz');
 
     // 855.35 g: SPEC §8 formats grams >= 100 with 0 decimals.
     expect(text(tile(container, 'XAG'))).toContain('855 g');
@@ -111,6 +135,73 @@ describe('MarketsSection', () => {
     const rates = tile(container, 'RATES');
     expect(rates).toHaveAttribute('aria-busy', 'true');
     expect(text(rates).split('—')).toHaveLength(4);
+  });
+
+  it('shows the daily change per line on the rates tile', () => {
+    const { container } = renderSection({}, { history: HISTORY });
+    const title = t('nl', 'sinceYesterday');
+    expect(changeSpans(tile(container, 'RATES'))).toEqual([
+      { text: '+10,0%', dir: 'up', title },
+      { text: '0,0%', dir: 'flat', title },
+      { text: '-4,8%', dir: 'down', title },
+    ]);
+    const lines = Array.from(tile(container, 'RATES').querySelectorAll('p'))
+      .map(plain)
+      .filter((l) => l !== t('nl', 'exchangeRate'));
+    expect(lines).toEqual(['1,1000 USD+10,0%', '0,8500 GBP0,0%', '4,0000 AED-4,8%']);
+  });
+
+  it('shows daily change pills for gold and silver and falls back to it for BTC', () => {
+    const { container } = renderSection(
+      {},
+      {
+        history: HISTORY,
+        quotes: {
+          BTC: { id: 'BTC', priceUsd: 66000, updatedAt: now },
+          XAU: { id: 'XAU', priceUsd: 4000, updatedAt: now },
+          XAG: { id: 'XAG', priceUsd: 50, updatedAt: now },
+        },
+      },
+    );
+    const title = t('nl', 'sinceYesterday');
+    const pill = (id: string) => {
+      const el = within(tile(container, id)).getByTitle(title);
+      return {
+        text: plain(el),
+        label: (el.getAttribute('aria-label') ?? '').split(MINUS).join('-'),
+      };
+    };
+    // Gold in EUR: 1 / 0.0002 = 5000 -> 1 / 0.00025 = 4000.
+    expect(pill('XAU')).toEqual({ text: '-20,0%', label: `-20,0% ${title}` });
+    expect(pill('XAG')).toEqual({ text: '0,0%', label: `0,0% ${title}` });
+    // BTC in EUR: 50.000 -> 100.000, used because CoinGecko gave no 24 h change.
+    expect(pill('BTC')).toEqual({ text: '+100,0%', label: `+100,0% ${title}` });
+    expect(within(tile(container, 'XAG')).getByTitle(title).className).toMatch(/neutral/);
+    expect(within(tile(container, 'XAU')).getByTitle(title).className).toMatch(/down/);
+    expect(plain(tile(container, 'XAU'))).toContain('≈ 0,344 oz');
+  });
+
+  it('prefers the CoinGecko change for BTC over the snapshot', () => {
+    const { container } = renderSection({}, { history: HISTORY });
+    const pill = within(tile(container, 'BTC')).getByTitle(t('nl', 'sinceYesterday'));
+    expect(plain(pill)).toBe('-3,1%');
+  });
+
+  it('without snapshots: no change texts or metal pills, BTC keeps CoinGecko', () => {
+    const { container } = renderSection({}, { history: null });
+    const title = t('nl', 'sinceYesterday');
+    expect(changeSpans(tile(container, 'RATES'))).toEqual([]);
+    expect(within(tile(container, 'XAU')).queryByTitle(title)).toBeNull();
+    expect(within(tile(container, 'XAG')).queryByTitle(title)).toBeNull();
+    expect(plain(within(tile(container, 'BTC')).getByTitle(title))).toBe('-3,1%');
+  });
+
+  it('without snapshots and without a CoinGecko change: no BTC pill', () => {
+    const { container } = renderSection(
+      {},
+      { quotes: { BTC: { id: 'BTC', priceUsd: 66000, updatedAt: now } } },
+    );
+    expect(within(tile(container, 'BTC')).queryByTitle(t('nl', 'sinceYesterday'))).toBeNull();
   });
 
   it('ticks the "ago" caption every 10 s', () => {

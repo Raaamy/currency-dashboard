@@ -103,7 +103,7 @@ Verify: component test (base EUR, rates USD 1.1 / GBP 0.85 / AED 4 -> `1,1000 US
 `0,8500 GBP`, `4,0000 AED`; base USD -> `0,9091 EUR`), manual check at 390 and 904 px,
 lint/build/test pass.
 
-## Task 8 — Daily change percentages `[~]`  (tier: careful, deps: 7)
+## Task 8 — Daily change percentages `[x]`  (tier: careful, deps: 7)
 
 Add the daily-snapshot source (`data/history.ts`, SPEC §6 last row + "Daily change"),
 `rateChangePct` in `lib/money.ts`, a `history` source in `DataContext` (`useHistory()`,

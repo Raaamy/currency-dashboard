@@ -10,6 +10,7 @@ import {
   ozToGram,
   parseAmount,
   quantityFor,
+  rateChangePct,
   roundTo,
   type RateTable,
 } from './money';
@@ -218,5 +219,38 @@ describe('formatPercent', () => {
     expect(nlNeg).not.toContain('-');
     expect(plain(formatPercent(3.14, 'en'))).toBe('+3.1%');
     expect(plain(formatPercent(0, 'en'))).toBe('0.0%');
+  });
+});
+
+describe('rateChangePct', () => {
+  const today = { eur: 1, usd: 1.21, xau: 0.0002 };
+  const previous = { eur: 1, usd: 1.1, xau: 0.00025 };
+
+  it('is the change of "units of to per 1 from" (EUR -> USD)', () => {
+    expect(rateChangePct(today, previous, 'EUR', 'USD')).toBeCloseTo(10, 10);
+  });
+
+  it('handles the inverse direction (USD -> EUR)', () => {
+    expect(rateChangePct(today, previous, 'USD', 'EUR')).toBeCloseTo(-9.090909, 5);
+  });
+
+  it('gives the change of an asset price in the base (XAU -> EUR)', () => {
+    // Gold in EUR: 1 / 0.00025 = 4000 -> 1 / 0.0002 = 5000.
+    expect(rateChangePct(today, previous, 'XAU', 'EUR')).toBeCloseTo(25, 10);
+  });
+
+  it('treats eur as 1 when it is missing and compares codes case-insensitively', () => {
+    expect(rateChangePct({ usd: 1.21 }, { usd: 1.1 }, 'eur', 'usd')).toBeCloseTo(10, 10);
+  });
+
+  it('is 0 when unchanged and for EUR -> EUR', () => {
+    expect(rateChangePct(previous, { ...previous }, 'USD', 'XAU')).toBe(0);
+    expect(rateChangePct(today, previous, 'EUR', 'EUR')).toBe(0);
+  });
+
+  it('is null when a rate is missing or not positive', () => {
+    expect(rateChangePct(today, previous, 'EUR', 'GBP')).toBeNull();
+    expect(rateChangePct({ ...today, usd: 0 }, previous, 'EUR', 'USD')).toBeNull();
+    expect(rateChangePct(today, { ...previous, usd: -1 }, 'USD', 'EUR')).toBeNull();
   });
 });

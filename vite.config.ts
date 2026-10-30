@@ -9,6 +9,7 @@ const API_HOSTS = [
   'https://api.coingecko.com/',
   'https://api.coinbase.com/',
   'https://api.gold-api.com/',
+  'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api',
 ];
 
 // https://vite.dev/config/

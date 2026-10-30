@@ -65,3 +65,10 @@
 .dim {
   opacity: 0.7;
 }
+
+/* Gold/silver: `≈ oz` caption followed by the daily change pill on one line. */
+.metalRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

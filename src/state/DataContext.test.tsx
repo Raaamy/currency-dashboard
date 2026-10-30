@@ -3,24 +3,49 @@ import { saveQuotes } from '@/data/markets';
 import { RATES_MAX_AGE_MS, saveRates, type Rates } from '@/data/rates';
 import { ER_API_BODY, mockFetch } from '@/test/mockFetch';
 import { AppProviders } from './AppProviders';
-import { useMarkets, useRates, useRefreshAll, type MarketsApi, type RatesApi } from './DataContext';
+import type { History } from '@/data/history';
+import {
+  useHistory,
+  useMarkets,
+  useRates,
+  useRefreshAll,
+  type HistoryApi,
+  type MarketsApi,
+  type RatesApi,
+} from './DataContext';
 
 let rates: RatesApi;
 let markets: MarketsApi;
+let history: HistoryApi;
 let refreshAll: () => Promise<void>;
 function Probe() {
   rates = useRates();
   markets = useMarkets();
+  history = useHistory();
   refreshAll = useRefreshAll();
   return null;
 }
 
-const ROUTES = {
+const SOURCE_ROUTES = {
   'open.er-api.com': { body: ER_API_BODY },
   coingecko: { body: { bitcoin: { usd: 67000, usd_24h_change: 1.5 } } },
   '/XAU': { body: { price: 4000, updatedAt: '2026-10-29T11:59:00Z' } },
   '/XAG': { body: { price: 48, updatedAt: '2026-10-29T11:59:00Z' } },
 };
+
+const ROUTES = {
+  ...SOURCE_ROUTES,
+  '@latest': { body: { date: '2026-10-28', eur: { usd: 1.112, gbp: 0.8365 } } },
+  '@2026-10-27': { body: { date: '2026-10-27', eur: { usd: 1.1, gbp: 0.8365 } } },
+};
+
+const HISTORY: History = {
+  today: { date: '2026-10-28', rates: { eur: 1, usd: 1.112 } },
+  previous: { date: '2026-10-27', rates: { eur: 1, usd: 1.1 } },
+  fetchedAt: 1,
+};
+
+const isHistoryUrl = (url: string) => url.includes('currency-api');
 
 const cached = (ageMs: number): Rates => ({
   base: 'EUR',
@@ -72,7 +97,10 @@ describe('DataProvider', () => {
     expect(markets.lastRefresh).not.toBeNull();
     expect(localStorage.getItem('wissel.rates')).not.toBeNull();
     expect(localStorage.getItem('wissel.markets')).not.toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(calledUrls(fetchMock).filter((u) => !isHistoryUrl(u))).toHaveLength(4);
+    await waitFor(() => expect(history.status).toBe('ok'));
+    expect(history.data?.previous.rates.usd).toBe(1.1);
+    expect(localStorage.getItem('wissel.history')).not.toBeNull();
   });
 
   it('warm fresh rates cache: rates are not fetched on load, status ok immediately', async () => {
@@ -155,5 +183,31 @@ describe('DataProvider', () => {
     await act(() => refreshAll());
     expect(calledUrls(fetchMock).filter((u) => u.includes('er-api'))).toHaveLength(1);
     expect(calledUrls(fetchMock).filter((u) => u.includes('coingecko'))).toHaveLength(2);
+    expect(calledUrls(fetchMock).filter((u) => u.includes('@latest'))).toHaveLength(2);
+  });
+
+  it('with initialData: exposes history', () => {
+    render(
+      <AppProviders initialData={{ rates: cached(0), history: HISTORY }}>
+        <Probe />
+      </AppProviders>,
+    );
+    expect(history).toMatchObject({ data: HISTORY, status: 'ok', error: null, lastRefresh: 1 });
+  });
+
+  it('a failed history fetch leaves rates untouched', async () => {
+    const fetchMock = mockFetch(SOURCE_ROUTES);
+    vi.stubGlobal('fetch', fetchMock);
+    render(
+      <AppProviders>
+        <Probe />
+      </AppProviders>,
+    );
+    await waitFor(() => expect(history.error).toBeTruthy());
+    await waitFor(() => expect(rates.status).toBe('ok'));
+    expect(history).toMatchObject({ data: null, status: 'idle' });
+    expect(rates.error).toBeNull();
+    expect(rates.data?.rates.USD).toBe(1.1638);
+    expect(calledUrls(fetchMock).filter(isHistoryUrl)).toHaveLength(2);
   });
 });

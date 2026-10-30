@@ -159,3 +159,37 @@ export function formatPercent(value: number, language: Language): string {
     .format(noNegativeZero(value) / 100)
     .replace(/-/g, '\u2212');
 }
+
+/** Daily snapshot rates: lower-case codes, units per 1 EUR (`eur` = 1 when missing). */
+export type SnapshotRates = Record<string, number>;
+
+const snapshotRate = (rates: SnapshotRates, code: string): number | undefined => {
+  const key = code.toLowerCase();
+  const value = rates[key];
+  if (value === undefined && key === 'eur') return 1;
+  return value;
+};
+
+/**
+ * Change in % of "units of `to` per 1 `from`" between two daily snapshots (SPEC §6
+ * "Daily change"). Codes are case-insensitive; `null` when a needed rate is missing or
+ * not positive.
+ */
+export function rateChangePct(
+  today: SnapshotRates,
+  previous: SnapshotRates,
+  from: string,
+  to: string,
+): number | null {
+  const values = [
+    snapshotRate(today, to),
+    snapshotRate(today, from),
+    snapshotRate(previous, to),
+    snapshotRate(previous, from),
+  ];
+  if (!values.every((v): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0)) {
+    return null;
+  }
+  const [todayTo, todayFrom, prevTo, prevFrom] = values;
+  return (todayTo / todayFrom / (prevTo / prevFrom) - 1) * 100;
+}
