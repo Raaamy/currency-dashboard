@@ -8,77 +8,46 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { detectLanguage, isLanguage, type Language } from '@/i18n/locale';
 import { CURRENCIES, type CurrencyCode } from '@/lib/currencies';
 import { readJSON, writeJSON } from '@/lib/storage';
 
-export type Theme = 'system' | 'light' | 'dark';
-
 export interface Settings {
-  language: Language;
-  theme: Theme;
   base: CurrencyCode;
   amount: string;
 }
 
 export interface SettingsApi extends Settings {
-  setLanguage: (language: Language) => void;
-  setTheme: (theme: Theme) => void;
   setBase: (base: CurrencyCode) => void;
   setAmount: (amount: string) => void;
 }
 
 const STORAGE_KEY = 'settings';
 /**
- * Version written with the stored settings. v2 made English the default: objects stored
- * without `version >= 2` (v1, when the language followed the browser) load as `en`.
+ * Version written with the stored settings. v3 dropped the language and theme fields (the
+ * copy is English only and light/dark follows the system); older objects keep base and amount.
  */
-export const SETTINGS_VERSION = 2;
-/** Must match the `--bg` token per scheme and the theme-color metas in index.html. */
-export const THEME_COLOR = { light: '#F6F3EE', dark: '#1C1A18' } as const;
+export const SETTINGS_VERSION = 3;
 
-const isTheme = (v: unknown): v is Theme => v === 'system' || v === 'light' || v === 'dark';
 const isCurrency = (v: unknown): v is CurrencyCode => CURRENCIES.some((c) => c.code === v);
 
 export const defaultSettings = (): Settings => ({
-  language: detectLanguage(),
-  theme: 'system',
   base: 'EUR',
   amount: '',
 });
 
 /**
- * Stored settings validated field by field and merged over the defaults. Settings stored
- * before `SETTINGS_VERSION` 2 keep theme, base and amount but reset the language to `en`.
+ * Stored settings validated field by field and merged over the defaults, whatever their
+ * version. Fields from older versions (`language`, `theme`) are ignored.
  */
 export function loadSettings(): Settings {
   const stored = readJSON<unknown>(STORAGE_KEY, null);
   const settings = defaultSettings();
   if (typeof stored !== 'object' || stored === null) return settings;
   const s = stored as Record<string, unknown>;
-  const current = typeof s.version === 'number' && s.version >= 2;
   return {
-    language: current && isLanguage(s.language) ? s.language : 'en',
-    theme: isTheme(s.theme) ? s.theme : settings.theme,
     base: isCurrency(s.base) ? s.base : settings.base,
     amount: typeof s.amount === 'string' ? s.amount : settings.amount,
   };
-}
-
-/** Applies the theme to `<html data-theme>` and the `<meta name="theme-color">` tags. */
-export function applyTheme(theme: Theme, doc: Document = document): void {
-  const root = doc.documentElement;
-  if (theme === 'system') delete root.dataset.theme;
-  else root.dataset.theme = theme;
-
-  doc.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
-    if (theme === 'system') {
-      const isDarkMeta = (meta.getAttribute('media') ?? '').includes('dark');
-      meta.content = isDarkMeta ? THEME_COLOR.dark : THEME_COLOR.light;
-    } else {
-      meta.content = THEME_COLOR[theme];
-    }
-  });
 }
 
 const SettingsContext = createContext<SettingsApi | null>(null);
@@ -95,28 +64,19 @@ export function SettingsProvider({ children, initialSettings }: SettingsProvider
   );
 
   useEffect(() => {
-    writeJSON(STORAGE_KEY, { ...settings, version: SETTINGS_VERSION });
+    writeJSON(STORAGE_KEY, {
+      base: settings.base,
+      amount: settings.amount,
+      version: SETTINGS_VERSION,
+    });
   }, [settings]);
 
-  useEffect(() => {
-    applyTheme(settings.theme);
-  }, [settings.theme]);
-
-  useEffect(() => {
-    document.documentElement.lang = settings.language;
-  }, [settings.language]);
-
-  const setLanguage = useCallback(
-    (language: Language) => setSettings((s) => ({ ...s, language })),
-    [],
-  );
-  const setTheme = useCallback((theme: Theme) => setSettings((s) => ({ ...s, theme })), []);
   const setBase = useCallback((base: CurrencyCode) => setSettings((s) => ({ ...s, base })), []);
   const setAmount = useCallback((amount: string) => setSettings((s) => ({ ...s, amount })), []);
 
   const value = useMemo<SettingsApi>(
-    () => ({ ...settings, setLanguage, setTheme, setBase, setAmount }),
-    [settings, setLanguage, setTheme, setBase, setAmount],
+    () => ({ ...settings, setBase, setAmount }),
+    [settings, setBase, setAmount],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

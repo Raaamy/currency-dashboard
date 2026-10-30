@@ -1,6 +1,10 @@
 /** Pure conversion math and number parsing/formatting (SPEC §5, §7.2, §8). No React, no DOM. */
-import { localeFor, type Language } from '@/i18n/locale';
 import type { CurrencyCode } from './currencies';
+
+/** Every number in the UI uses Dutch notation (`1.234,56`); the copy stays English. */
+export const NUMBER_LOCALE = 'nl-NL';
+/** Dates follow the English copy (`29 Oct, 01:02`). */
+export const DATE_LOCALE = 'en-GB';
 
 export const OZ_IN_GRAMS = 31.1034768;
 
@@ -72,27 +76,27 @@ const noNegativeZero = (value: number): number => (value === 0 ? 0 : value);
 export function formatMoney(
   value: number,
   code: CurrencyCode,
-  language: Language,
   opts: { decimals?: number; symbol?: boolean } = {},
 ): string {
   const decimals = opts.decimals ?? 2;
   const symbol = opts.symbol ?? true;
-  return new Intl.NumberFormat(localeFor(language), {
-    ...(symbol ? { style: 'currency', currency: code } : { style: 'decimal' }),
+  return new Intl.NumberFormat(NUMBER_LOCALE, {
+    ...(symbol
+      ? { style: 'currency', currency: code, currencyDisplay: 'narrowSymbol' }
+      : { style: 'decimal' }),
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   }).format(noNegativeZero(value));
 }
 
-/** Locale number; defaults to 0..2 decimals (`maxDecimals` never below `minDecimals`). */
+/** Dutch-notation number; defaults to 0..2 decimals (`maxDecimals` never below `minDecimals`). */
 export function formatNumber(
   value: number,
-  language: Language,
   opts: { minDecimals?: number; maxDecimals?: number } = {},
 ): string {
   const min = opts.minDecimals ?? 0;
   const max = Math.max(opts.maxDecimals ?? Math.max(min, 2), min);
-  return new Intl.NumberFormat(localeFor(language), {
+  return new Intl.NumberFormat(NUMBER_LOCALE, {
     minimumFractionDigits: min,
     maximumFractionDigits: max,
   }).format(noNegativeZero(value));
@@ -118,24 +122,20 @@ export function quantityFor(
  * - gram: 2 decimals below 100, else 0.  oz: 3 decimals below 10, else 2.
  * - zero is always `0`.
  */
-export function formatQuantity(
-  value: number,
-  kind: 'btc' | 'gram' | 'oz',
-  language: Language,
-): string {
-  if (value === 0 || !Number.isFinite(value)) return formatNumber(0, language, { maxDecimals: 0 });
+export function formatQuantity(value: number, kind: 'btc' | 'gram' | 'oz'): string {
+  if (value === 0 || !Number.isFinite(value)) return formatNumber(0, { maxDecimals: 0 });
   if (kind === 'btc') {
     const magnitude = Math.floor(Math.log10(Math.abs(value)));
     const decimals = Math.min(8, Math.max(0, 4 - magnitude));
-    return formatNumber(value, language, { minDecimals: 0, maxDecimals: decimals });
+    return formatNumber(value, { minDecimals: 0, maxDecimals: decimals });
   }
   const decimals = kind === 'gram' ? (value < 100 ? 2 : 0) : value < 10 ? 3 : 2;
-  return formatNumber(value, language, { minDecimals: decimals, maxDecimals: decimals });
+  return formatNumber(value, { minDecimals: decimals, maxDecimals: decimals });
 }
 
-/** e.g. nl `29 okt, 02:02`, en `29 Oct, 02:02` (local time, 24 h). */
-export function formatTimestamp(ms: number, language: Language): string {
-  const parts = new Intl.DateTimeFormat(localeFor(language), {
+/** e.g. `29 Oct, 02:02` (English, local time, 24 h). */
+export function formatTimestamp(ms: number): string {
+  const parts = new Intl.DateTimeFormat(DATE_LOCALE, {
     day: 'numeric',
     month: 'short',
     hour: '2-digit',
@@ -148,9 +148,9 @@ export function formatTimestamp(ms: number, language: Language): string {
   return `${part('day')} ${month}, ${part('hour')}:${part('minute')}`;
 }
 
-/** Signed percentage with 1 decimal, real minus sign: nl `−3,1%`-style, en `+3.1%`. */
-export function formatPercent(value: number, language: Language): string {
-  return new Intl.NumberFormat(localeFor(language), {
+/** Signed percentage with 1 decimal, Dutch notation and a real minus sign: `−3,1%`, `+3,1%`. */
+export function formatPercent(value: number): string {
+  return new Intl.NumberFormat(NUMBER_LOCALE, {
     style: 'percent',
     signDisplay: 'exceptZero',
     minimumFractionDigits: 1,

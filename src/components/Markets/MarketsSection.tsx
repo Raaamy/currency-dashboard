@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMarkets } from '@/data';
 import type { AssetId } from '@/data';
 import { useT } from '@/i18n';
@@ -31,10 +31,9 @@ function CloudOffIcon() {
   );
 }
 
-/** Markets heading (live / offline state), the rates tile and the BTC, gold and silver tiles (SPEC §8). */
+/** The rates tile, the BTC, gold and silver tiles and a live / offline status line below them (SPEC §8). */
 export function MarketsSection() {
   const t = useT();
-  const headingId = useId();
   const { data: quotes, status, error, lastRefresh } = useMarkets();
   const [now, setNow] = useState(() => Date.now());
 
@@ -63,20 +62,17 @@ export function MarketsSection() {
   }
 
   return (
-    <section className={styles.section} aria-labelledby={headingId}>
-      <div className={styles.heading}>
-        <h2 id={headingId} className={styles.label}>
-          {t('markets')}
-        </h2>
-        <LiveDot muted={stale} />
-        {stale ? <CloudOffIcon /> : null}
-        {caption !== null ? <span className={styles.caption}>{caption}</span> : null}
-      </div>
+    <section className={styles.section} aria-label={t('markets')}>
       <div className={styles.tiles}>
         <RatesTile />
         {ASSETS.map((id) => (
           <MarketTile key={id} id={id} stale={stale} />
         ))}
+      </div>
+      <div className={styles.status}>
+        <LiveDot muted={stale} />
+        {stale ? <CloudOffIcon /> : null}
+        {caption !== null ? <span className={styles.caption}>{caption}</span> : null}
       </div>
     </section>
   );

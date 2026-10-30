@@ -126,3 +126,9 @@ Code side of the rename: remove the header `<h1>`, English as default language w
 settings migration (version 2), rates tile first in the markets section, `<title>`, manifest,
 apple-mobile-web-app-title and package name "Currency Dashboard" / `currency-dashboard`, new
 exchange-arrows icon regenerated. Verify: lint/build/test pass, manual check at 390 and 904 px.
+
+## Task 11 — Remove settings, English UI, Dutch numbers `[x]`  (tier: careful, deps: 10)
+
+Delete the settings button and sheet; English-only copy; all numbers in nl-NL notation with
+English dates; light/dark from the system only; settings v3 = { base, amount }. Verify:
+lint/build/test pass; browser check at 390 and 904 px in light and dark.

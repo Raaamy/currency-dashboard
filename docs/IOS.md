@@ -37,9 +37,9 @@ npm run build && npx cap sync ios
 ## Status bar and safe areas
 
 - `npm i @capacitor/status-bar && npx cap sync ios`.
-- Hook it in `applyTheme` in `src/state/SettingsContext.tsx`: call
-  `StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light })` with the resolved theme
-  (guard with `Capacitor.isNativePlatform()` so the web build is unaffected).
+- Listen to `matchMedia('(prefers-color-scheme: dark)')` and call `StatusBar.setStyle`
+  accordingly (`{ style: dark ? Style.Dark : Style.Light }`; guard with
+  `Capacitor.isNativePlatform()` so the web build is unaffected).
 - `index.html` already sets `viewport-fit=cover`, so `env(safe-area-inset-*)` in
   `global.css` works inside WKWebView.
 

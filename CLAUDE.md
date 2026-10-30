@@ -12,8 +12,8 @@ Stack: Vite 7 + React 19 + TypeScript (strict), plain CSS modules + tokens, Vite
 - Design is decided in `docs/SPEC.md` §8; use only the tokens in `src/styles/tokens.css`. No hard-coded colors, radii or shadows in components.
 - Components never call `fetch`; they use hooks from `src/data/` and `src/state/`. Provider URLs and response shapes live only in `src/data/`.
 - `src/lib/*` stays pure (no React, no DOM) and every exported function has a Vitest test.
-- All user-visible copy goes through `useT()` from `src/i18n`; never inline a Dutch or English string in a component.
-- Numbers through `formatMoney`/`formatNumber` in `src/lib/money.ts`; never `toFixed` in a component.
+- All user-visible copy goes through `t`/`useT()` from `src/i18n` (English only); never inline a string in a component.
+- Numbers through `formatMoney`/`formatNumber` in `src/lib/money.ts` (always nl-NL notation, `NUMBER_LOCALE`); never `toFixed` in a component.
 - Keep it portable to Capacitor: no SSR, no `window.location` routing, relative asset base, fetch only.
 - Touch targets >= 44 px; input fonts >= 16 px; respect `prefers-reduced-motion`.
 - When you add or move files, update `filemap.md`.

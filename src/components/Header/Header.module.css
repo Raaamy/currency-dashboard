@@ -1,8 +1,6 @@
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
   min-height: 44px;
 }
 
@@ -61,36 +59,4 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-.settings {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
-  color: var(--text-2);
-  cursor: pointer;
-  transition:
-    transform var(--dur) var(--ease),
-    background-image var(--dur) var(--ease);
-}
-
-.settings:hover {
-  background-image: linear-gradient(var(--line), var(--line));
-}
-
-.settings:active {
-  transform: scale(0.96);
-}
-
-.settings:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }

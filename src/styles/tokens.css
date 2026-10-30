@@ -1,5 +1,5 @@
 /* Design tokens — the only source of colors, radii, shadows, type and motion (SPEC §8).
-   Light on :root; dark via system preference (unless data-theme="light") or data-theme="dark". */
+   Light on :root; dark via the system preference only (no in-app setting). */
 
 :root {
   color-scheme: light;
@@ -49,7 +49,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
+  :root {
     color-scheme: dark;
 
     --bg: #1c1a18;
@@ -75,31 +75,4 @@
 
     --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.35);
   }
-}
-
-:root[data-theme='dark'] {
-  color-scheme: dark;
-
-  --bg: #1c1a18;
-  --surface: #272421;
-  --surface-2: #332a22;
-  --text: #f3efe9;
-  --text-2: #a49c92;
-  --line: rgba(255, 255, 255, 0.07);
-  --accent: #efae7e;
-  --accent-soft: #3d2e22;
-  --up: #7cc7a1;
-  --up-soft: #1f352b;
-  --down: #e79a9a;
-  --down-soft: #3a2626;
-
-  --tint-eur: #283046;
-  --tint-usd: #1f352b;
-  --tint-gbp: #36283a;
-  --tint-aed: #3d2e22;
-  --tint-btc: #45301c;
-  --tint-gold: linear-gradient(135deg, #d8b24e, #9a7a2c);
-  --tint-silver: linear-gradient(135deg, #c3c9d2, #7e8792);
-
-  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.35);
 }

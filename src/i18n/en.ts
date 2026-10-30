@@ -1,7 +1,5 @@
-import type { MessageKey } from './nl';
-
-/** English copy, SPEC §8 "Copy (nl / en)". Must have exactly the keys of `nl`. */
-export const en: Record<MessageKey, string> = {
+/** English copy, SPEC §8 "Copy". The key set of this object defines `MessageKey`. */
+export const en = {
   convert: 'Convert',
   markets: 'Markets',
   updated: 'Rates updated {time}',
@@ -16,15 +14,6 @@ export const en: Record<MessageKey, string> = {
   exchangeRate: 'Exchange rate',
   sinceYesterday: 'vs yesterday',
   refresh: 'Refresh',
-  settings: 'Settings',
-  close: 'Close',
-  language: 'Language',
-  'lang.nl': 'Nederlands',
-  'lang.en': 'English',
-  appearance: 'Appearance',
-  'theme.system': 'System',
-  'theme.light': 'Light',
-  'theme.dark': 'Dark',
   'cur.EUR': 'Euro',
   'cur.USD': 'US dollar',
   'cur.GBP': 'British pound',
@@ -33,3 +22,5 @@ export const en: Record<MessageKey, string> = {
   'asset.XAU': 'Gold',
   'asset.XAG': 'Silver',
 };
+
+export type MessageKey = keyof typeof en;

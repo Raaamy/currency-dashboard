@@ -36,7 +36,7 @@ const pillVariant = (pct: number): PillVariant => {
 /** One asset row: badge, name + unit price captions, quantity the typed amount buys. */
 export function MarketTile({ id, stale = false }: MarketTileProps) {
   const t = useT();
-  const { language, base, amount } = useSettings();
+  const { base, amount } = useSettings();
   const { data: rates } = useRates();
   const { data: quotes } = useMarkets();
   const { data: history } = useHistory();
@@ -62,9 +62,9 @@ export function MarketTile({ id, stale = false }: MarketTileProps) {
         variant={pillVariant(pct)}
         className={stale ? styles.dim : undefined}
         title={t('sinceYesterday')}
-        aria-label={`${formatPercent(pct, language)} ${t('sinceYesterday')}`}
+        aria-label={`${formatPercent(pct)} ${t('sinceYesterday')}`}
       >
-        {formatPercent(pct, language)}
+        {formatPercent(pct)}
       </Pill>
     );
 
@@ -72,21 +72,19 @@ export function MarketTile({ id, stale = false }: MarketTileProps) {
     const priceInBase = convert(quote.priceUsd, 'USD', base, rates.rates);
     const qty = quantityFor(value, base, quote.priceUsd, rates.rates);
     if (isBtc) {
-      captions.push(
-        `${formatMoney(priceInBase, base, language, { decimals: 0 })} ${t('perBitcoin')}`,
-      );
-      quantity = `${formatQuantity(qty, 'btc', language)} BTC`;
+      captions.push(`${formatMoney(priceInBase, base, { decimals: 0 })} ${t('perBitcoin')}`);
+      quantity = `${formatQuantity(qty, 'btc')} BTC`;
       below = changePill(quote.change24hPct ?? snapshotChange);
     } else {
       const perOunce = priceInBase;
       const perGram = perOunce / OZ_IN_GRAMS;
-      captions.push(`${formatMoney(perGram, base, language)} ${t('perGram')}`);
-      captions.push(`${formatMoney(perOunce, base, language)} ${t('perOunce')}`);
-      quantity = `${formatQuantity(ozToGram(qty), 'gram', language)} g`;
+      captions.push(`${formatMoney(perGram, base)} ${t('perGram')}`);
+      captions.push(`${formatMoney(perOunce, base)} ${t('perOunce')}`);
+      quantity = `${formatQuantity(ozToGram(qty), 'gram')} g`;
       below = (
         <div className={styles.metalRow}>
           <span className={stale ? `${styles.caption} ${styles.dim}` : styles.caption}>
-            {t('approxOz', { n: formatQuantity(qty, 'oz', language) })}
+            {t('approxOz', { n: formatQuantity(qty, 'oz') })}
           </span>
           {changePill(snapshotChange)}
         </div>

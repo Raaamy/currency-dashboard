@@ -28,7 +28,7 @@ const fixture = (overrides: Partial<InitialData> = {}): InitialData => ({
 function renderSection(settings: Partial<Settings> = {}, data: Partial<InitialData> = {}) {
   return render(
     <AppProviders
-      initialSettings={{ language: 'nl', base: 'EUR', amount: '1250', ...settings }}
+      initialSettings={{ base: 'EUR', amount: '1250', ...settings }}
       initialData={fixture(data)}
     >
       <MarketsSection />
@@ -70,7 +70,8 @@ const changeSpans = (el: HTMLElement) =>
 describe('MarketsSection', () => {
   it('shows quantities, unit prices and the change pill for 1250 EUR', () => {
     const { container } = renderSection();
-    expect(screen.getByRole('heading', { name: t('nl', 'markets') })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: t('markets') })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: t('markets') })).toBeNull();
 
     const btc = text(tile(container, 'BTC'));
     expect(btc).toContain('0,020833 BTC');
@@ -87,7 +88,7 @@ describe('MarketsSection', () => {
     // 855.35 g: SPEC §8 formats grams >= 100 with 0 decimals.
     expect(text(tile(container, 'XAG'))).toContain('855 g');
     expect(text(tile(container, 'XAG'))).toContain('≈ 27,50 oz');
-    expect(text(container)).toContain('live · 0 s geleden');
+    expect(text(container)).toContain('live · 0s ago');
   });
 
   it('shows zero quantities for an empty amount', () => {
@@ -99,7 +100,7 @@ describe('MarketsSection', () => {
 
   it('shows the offline caption when stale', () => {
     renderSection({}, { marketsStatus: 'stale' });
-    expect(screen.getByText(t('nl', 'offline'))).toBeInTheDocument();
+    expect(screen.getByText(t('offline'))).toBeInTheDocument();
   });
 
   it('shows dashes for a missing quote', () => {
@@ -121,10 +122,10 @@ describe('MarketsSection', () => {
     const { container } = renderSection();
     const rates = tile(container, 'RATES');
     expect(within(rates).getByRole('heading', { name: '1 EUR' })).toBeInTheDocument();
-    expect(text(rates)).toContain(t('nl', 'exchangeRate'));
+    expect(text(rates)).toContain(t('exchangeRate'));
     const lines = Array.from(rates.querySelectorAll('p'))
       .map(text)
-      .filter((l) => l !== t('nl', 'exchangeRate'));
+      .filter((l) => l !== t('exchangeRate'));
     expect(lines).toEqual(['1,1000 USD', '0,8500 GBP', '4,0000 AED']);
   });
 
@@ -134,7 +135,7 @@ describe('MarketsSection', () => {
     expect(within(rates).getByRole('heading', { name: '1 USD' })).toBeInTheDocument();
     const lines = Array.from(rates.querySelectorAll('p'))
       .map(text)
-      .filter((l) => l !== t('nl', 'exchangeRate'));
+      .filter((l) => l !== t('exchangeRate'));
     expect(lines).toEqual(['0,9091 EUR', '0,7727 GBP', '3,6364 AED']);
   });
 
@@ -147,7 +148,7 @@ describe('MarketsSection', () => {
 
   it('shows the daily change per line on the rates tile', () => {
     const { container } = renderSection({}, { history: HISTORY });
-    const title = t('nl', 'sinceYesterday');
+    const title = t('sinceYesterday');
     expect(changeSpans(tile(container, 'RATES'))).toEqual([
       { text: '+10,0%', dir: 'up', title },
       { text: '0,0%', dir: 'flat', title },
@@ -155,7 +156,7 @@ describe('MarketsSection', () => {
     ]);
     const lines = Array.from(tile(container, 'RATES').querySelectorAll('p'))
       .map(plain)
-      .filter((l) => l !== t('nl', 'exchangeRate'));
+      .filter((l) => l !== t('exchangeRate'));
     expect(lines).toEqual(['1,1000 USD+10,0%', '0,8500 GBP0,0%', '4,0000 AED-4,8%']);
   });
 
@@ -171,7 +172,7 @@ describe('MarketsSection', () => {
         },
       },
     );
-    const title = t('nl', 'sinceYesterday');
+    const title = t('sinceYesterday');
     const pill = (id: string) => {
       const el = within(tile(container, id)).getByTitle(title);
       return {
@@ -191,13 +192,13 @@ describe('MarketsSection', () => {
 
   it('prefers the CoinGecko change for BTC over the snapshot', () => {
     const { container } = renderSection({}, { history: HISTORY });
-    const pill = within(tile(container, 'BTC')).getByTitle(t('nl', 'sinceYesterday'));
+    const pill = within(tile(container, 'BTC')).getByTitle(t('sinceYesterday'));
     expect(plain(pill)).toBe('-3,1%');
   });
 
   it('without snapshots: no change texts or metal pills, BTC keeps CoinGecko', () => {
     const { container } = renderSection({}, { history: null });
-    const title = t('nl', 'sinceYesterday');
+    const title = t('sinceYesterday');
     expect(changeSpans(tile(container, 'RATES'))).toEqual([]);
     expect(within(tile(container, 'XAU')).queryByTitle(title)).toBeNull();
     expect(within(tile(container, 'XAG')).queryByTitle(title)).toBeNull();
@@ -209,7 +210,7 @@ describe('MarketsSection', () => {
       {},
       { quotes: { BTC: { id: 'BTC', priceUsd: 66000, updatedAt: now } } },
     );
-    expect(within(tile(container, 'BTC')).queryByTitle(t('nl', 'sinceYesterday'))).toBeNull();
+    expect(within(tile(container, 'BTC')).queryByTitle(t('sinceYesterday'))).toBeNull();
   });
 
   it('ticks the "ago" caption every 10 s', () => {
@@ -220,11 +221,11 @@ describe('MarketsSection', () => {
       act(() => {
         vi.advanceTimersByTime(20_000);
       });
-      expect(text(container)).toContain('live · 20 s geleden');
+      expect(text(container)).toContain('live · 20s ago');
       act(() => {
         vi.advanceTimersByTime(60_000);
       });
-      expect(text(container)).toContain('live · 1 min geleden');
+      expect(text(container)).toContain('live · 1 min ago');
     } finally {
       vi.useRealTimers();
     }

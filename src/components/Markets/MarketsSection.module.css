@@ -5,19 +5,13 @@
   min-width: 0;
 }
 
-.heading {
+.status {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   min-width: 0;
   padding: 0 4px;
-}
-
-.label {
-  font: var(--font-micro);
-  letter-spacing: var(--tracking-micro);
-  text-transform: uppercase;
-  color: var(--text-2);
 }
 
 .cloudOff {

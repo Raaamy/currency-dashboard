@@ -19,7 +19,7 @@ import { CurrencyRow } from './CurrencyRow';
  * A plain tap with the keyboard closed never focuses, so the mobile keyboard does not pop up.
  */
 export function ConverterCard() {
-  const { language, base, amount, setBase, setAmount } = useSettings();
+  const { base, amount, setBase, setAmount } = useSettings();
   const { data } = useRates();
   const t = useT();
   const titleId = useId();
@@ -62,10 +62,9 @@ export function ConverterCard() {
   const display = (currency: Currency): { text: string; muted: boolean } => {
     if (!rates) return { text: '—', muted: true };
     const opts = { symbol: false, decimals: currency.decimals };
-    if (parsed === null)
-      return { text: formatMoney(0, currency.code, language, opts), muted: true };
+    if (parsed === null) return { text: formatMoney(0, currency.code, opts), muted: true };
     const value = convert(parsed, base, currency.code, rates);
-    return { text: formatMoney(value, currency.code, language, opts), muted: false };
+    return { text: formatMoney(value, currency.code, opts), muted: false };
   };
 
   return (

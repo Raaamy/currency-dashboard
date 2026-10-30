@@ -1,67 +1,32 @@
 import { render, screen } from '@testing-library/react';
-import { SettingsProvider } from '@/state/SettingsContext';
 import { en } from './en';
-import { detectLanguage, localeFor, t, useT, type MessageKey } from './index';
-import { nl } from './nl';
-
-afterEach(() => {
-  vi.restoreAllMocks();
-  localStorage.clear();
-});
+import { t, useT, type MessageKey } from './index';
 
 describe('t()', () => {
-  it('returns the copy for each language', () => {
-    expect(t('nl', 'convert')).toBe('Omrekenen');
-    expect(t('en', 'convert')).toBe('Convert');
-    expect(t('nl', 'asset.XAU')).toBe('Goud');
-    expect(t('en', 'theme.system')).toBe('System');
+  it('returns the English copy', () => {
+    expect(t('convert')).toBe('Convert');
+    expect(t('asset.XAU')).toBe('Gold');
+    expect(t('cur.USD')).toBe('US dollar');
   });
 
   it('replaces placeholders', () => {
-    expect(t('nl', 'updated', { time: '29 okt, 02:02' })).toBe('Koersen bijgewerkt 29 okt, 02:02');
-    expect(t('en', 'ago.s', { n: 12 })).toBe('12s ago');
-    expect(t('nl', 'ago.s', { n: 12 })).toBe('12 s geleden');
-    expect(t('nl', 'ago.m', { n: 3 })).toBe('3 min geleden');
-    expect(t('en', 'live', { ago: t('en', 'ago.m', { n: 2 }) })).toBe('live · 2 min ago');
-    expect(t('nl', 'approxOz', { n: '0,346' })).toBe('≈ 0,346 oz');
+    expect(t('updated', { time: '29 Oct, 02:02' })).toBe('Rates updated 29 Oct, 02:02');
+    expect(t('ago.s', { n: 12 })).toBe('12s ago');
+    expect(t('ago.m', { n: 3 })).toBe('3 min ago');
+    expect(t('live', { ago: t('ago.m', { n: 2 }) })).toBe('live · 2 min ago');
+    expect(t('approxOz', { n: '0,346' })).toBe('≈ 0,346 oz');
   });
 
   it('leaves unknown placeholders and falls back to the key for unknown keys', () => {
-    expect(t('en', 'updated')).toBe('Rates updated {time}');
-    expect(t('en', 'updated', { other: 1 })).toBe('Rates updated {time}');
-    expect(t('en', 'no.such.key' as MessageKey)).toBe('no.such.key');
+    expect(t('updated')).toBe('Rates updated {time}');
+    expect(t('updated', { other: 1 })).toBe('Rates updated {time}');
+    expect(t('no.such.key' as MessageKey)).toBe('no.such.key');
   });
 
-  it('has the same keys in nl and en', () => {
-    expect(Object.keys(en).sort()).toEqual(Object.keys(nl).sort());
-    expect(Object.keys(nl)).toHaveLength(30);
-  });
-});
-
-describe('localeFor / detectLanguage', () => {
-  it('maps languages to locales', () => {
-    expect(localeFor('nl')).toBe('nl-NL');
-    expect(localeFor('en')).toBe('en-GB');
-  });
-
-  it('defaults to en whatever navigator.language says', () => {
-    const spy = vi.spyOn(navigator, 'language', 'get');
-    spy.mockReturnValue('nl-BE');
-    expect(detectLanguage()).toBe('en');
-    spy.mockReturnValue('NL');
-    expect(detectLanguage()).toBe('en');
-    spy.mockReturnValue('en-US');
-    expect(detectLanguage()).toBe('en');
-    spy.mockReturnValue('de-DE');
-    expect(detectLanguage()).toBe('en');
-  });
-
-  it('is safe without navigator', () => {
-    vi.stubGlobal('navigator', undefined);
-    try {
-      expect(detectLanguage()).toBe('en');
-    } finally {
-      vi.unstubAllGlobals();
+  it('has exactly the SPEC §8 keys', () => {
+    expect(Object.keys(en)).toHaveLength(21);
+    for (const removed of ['settings', 'close', 'appearance', 'theme.dark', 'lang.nl']) {
+      expect(en).not.toHaveProperty(removed);
     }
   });
 });
@@ -72,12 +37,8 @@ describe('useT()', () => {
     return <p>{tr('updated', { time: '10:00' })}</p>;
   }
 
-  it('uses the settings language', () => {
-    render(
-      <SettingsProvider initialSettings={{ language: 'en' }}>
-        <Probe />
-      </SettingsProvider>,
-    );
+  it('returns the English translator without any provider', () => {
+    render(<Probe />);
     expect(screen.getByText('Rates updated 10:00')).toBeInTheDocument();
   });
 });

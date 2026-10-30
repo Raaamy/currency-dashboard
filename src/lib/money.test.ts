@@ -1,11 +1,13 @@
 import {
   convert,
+  DATE_LOCALE,
   formatMoney,
   formatNumber,
   formatPercent,
   formatQuantity,
   formatTimestamp,
   gramToOz,
+  NUMBER_LOCALE,
   OZ_IN_GRAMS,
   ozToGram,
   parseAmount,
@@ -102,35 +104,38 @@ describe('roundTo', () => {
 });
 
 describe('formatMoney', () => {
-  it('formats currency per locale with 2 decimals by default', () => {
-    expect(plain(formatMoney(1234.5, 'EUR', 'nl'))).toBe('€ 1.234,50');
-    expect(plain(formatMoney(1234.5, 'EUR', 'en'))).toBe('€1,234.50');
-    expect(plain(formatMoney(1234.5, 'USD', 'en'))).toMatch(/1,234\.50/);
-    expect(plain(formatMoney(10, 'AED', 'nl'))).toMatch(/10,00/);
+  it('uses Dutch notation and narrow symbols with 2 decimals by default', () => {
+    expect(NUMBER_LOCALE).toBe('nl-NL');
+    expect(plain(formatMoney(1250, 'EUR'))).toBe('€ 1.250,00');
+    expect(plain(formatMoney(1393.2, 'USD'))).toBe('$ 1.393,20');
+    expect(plain(formatMoney(1046.64, 'GBP'))).toBe('£ 1.046,64');
+    expect(plain(formatMoney(1234.5, 'EUR'))).toBe('€ 1.234,50');
+    // AED has no narrow symbol in every ICU build; whatever Intl gives must not be empty.
+    expect(plain(formatMoney(10, 'AED'))).toMatch(/^\S+ 10,00$/);
   });
 
   it('honours decimals and symbol: false', () => {
-    expect(plain(formatMoney(63209.4, 'EUR', 'nl', { decimals: 0 }))).toBe('€ 63.209');
-    expect(formatMoney(1234.5, 'GBP', 'nl', { symbol: false })).toBe('1.234,50');
-    expect(formatMoney(1234.5, 'GBP', 'en', { symbol: false })).toBe('1,234.50');
+    expect(plain(formatMoney(63209.4, 'EUR', { decimals: 0 }))).toBe('€ 63.209');
+    expect(formatMoney(1234.5, 'GBP', { symbol: false })).toBe('1.234,50');
+    expect(formatMoney(4938.24, 'AED', { symbol: false })).toBe('4.938,24');
   });
 
   it('never prints negative zero', () => {
-    expect(plain(formatMoney(-0, 'EUR', 'nl'))).toBe('€ 0,00');
+    expect(plain(formatMoney(-0, 'EUR'))).toBe('€ 0,00');
   });
 });
 
 describe('formatNumber', () => {
-  it('uses locale separators with 0..2 decimals by default', () => {
-    expect(formatNumber(1234.567, 'nl')).toBe('1.234,57');
-    expect(formatNumber(1234.567, 'en')).toBe('1,234.57');
-    expect(formatNumber(5, 'nl')).toBe('5');
+  it('uses Dutch separators with 0..2 decimals by default', () => {
+    expect(formatNumber(1234.567)).toBe('1.234,57');
+    expect(formatNumber(5)).toBe('5');
   });
 
   it('honours min/max decimals', () => {
-    expect(formatNumber(5, 'nl', { minDecimals: 2 })).toBe('5,00');
-    expect(formatNumber(1.23456, 'en', { maxDecimals: 4 })).toBe('1.2346');
-    expect(formatNumber(1.2, 'en', { minDecimals: 3, maxDecimals: 1 })).toBe('1.200');
+    expect(formatNumber(5, { minDecimals: 2 })).toBe('5,00');
+    expect(formatNumber(1.23456, { maxDecimals: 4 })).toBe('1,2346');
+    expect(formatNumber(0.017852, { maxDecimals: 6 })).toBe('0,017852');
+    expect(formatNumber(1.2, { minDecimals: 3, maxDecimals: 1 })).toBe('1,200');
   });
 });
 
@@ -166,59 +171,50 @@ describe('quantityFor', () => {
 
 describe('formatQuantity', () => {
   it('btc: up to 5 significant digits, max 8 decimals, trailing zeros stripped', () => {
-    expect(formatQuantity(0.01978, 'btc', 'nl')).toBe('0,01978');
-    expect(formatQuantity(0.0197764, 'btc', 'nl')).toBe('0,019776');
-    expect(formatQuantity(1.2345, 'btc', 'nl')).toBe('1,2345');
-    expect(formatQuantity(1.23456, 'btc', 'nl')).toBe('1,2346');
-    expect(formatQuantity(12.5, 'btc', 'nl')).toBe('12,5');
-    expect(formatQuantity(12.5, 'btc', 'en')).toBe('12.5');
-    expect(formatQuantity(2, 'btc', 'nl')).toBe('2');
-    expect(formatQuantity(0.000000123456, 'btc', 'nl')).toBe('0,00000012');
-    expect(formatQuantity(0, 'btc', 'nl')).toBe('0');
+    expect(formatQuantity(0.01978, 'btc')).toBe('0,01978');
+    expect(formatQuantity(0.0197764, 'btc')).toBe('0,019776');
+    expect(formatQuantity(1.2345, 'btc')).toBe('1,2345');
+    expect(formatQuantity(1.23456, 'btc')).toBe('1,2346');
+    expect(formatQuantity(12.5, 'btc')).toBe('12,5');
+    expect(formatQuantity(2, 'btc')).toBe('2');
+    expect(formatQuantity(0.000000123456, 'btc')).toBe('0,00000012');
+    expect(formatQuantity(0, 'btc')).toBe('0');
   });
 
   it('gram: 2 decimals under 100, else 0', () => {
-    expect(formatQuantity(10.7712, 'gram', 'nl')).toBe('10,77');
-    expect(formatQuantity(99.994, 'gram', 'en')).toBe('99.99');
-    expect(formatQuantity(100, 'gram', 'nl')).toBe('100');
-    expect(formatQuantity(1234.6, 'gram', 'nl')).toBe('1.235');
-    expect(formatQuantity(0, 'gram', 'nl')).toBe('0');
+    expect(formatQuantity(10.7712, 'gram')).toBe('10,77');
+    expect(formatQuantity(10.8, 'gram')).toBe('10,80');
+    expect(formatQuantity(99.994, 'gram')).toBe('99,99');
+    expect(formatQuantity(100, 'gram')).toBe('100');
+    expect(formatQuantity(1234.6, 'gram')).toBe('1.235');
+    expect(formatQuantity(0, 'gram')).toBe('0');
   });
 
   it('oz: 3 decimals under 10, else 2', () => {
-    expect(formatQuantity(0.34628, 'oz', 'nl')).toBe('0,346');
-    expect(formatQuantity(12.3456, 'oz', 'en')).toBe('12.35');
-    expect(formatQuantity(0, 'oz', 'en')).toBe('0');
+    expect(formatQuantity(0.34628, 'oz')).toBe('0,346');
+    expect(formatQuantity(12.3456, 'oz')).toBe('12,35');
+    expect(formatQuantity(0, 'oz')).toBe('0');
   });
 });
 
 describe('formatTimestamp', () => {
-  it('shows day, short month and 24 h time', () => {
-    const ms = new Date(2026, 9, 29, 2, 2).getTime();
-    const nl = formatTimestamp(ms, 'nl');
-    const en = formatTimestamp(ms, 'en');
-    for (const s of [nl, en]) {
-      expect(s).toContain('29');
-      expect(s).toContain(':');
-      expect(s).toContain('02:02');
-    }
-    expect(nl.toLowerCase()).toContain('okt');
-    expect(en).toContain('Oct');
+  it('shows day, short English month and 24 h time', () => {
+    expect(DATE_LOCALE).toBe('en-GB');
+    expect(formatTimestamp(new Date(2026, 9, 29, 1, 2).getTime())).toBe('29 Oct, 01:02');
   });
 
   it('uses 00 for midnight, not 24', () => {
-    expect(formatTimestamp(new Date(2026, 0, 5, 0, 7).getTime(), 'en')).toContain('00:07');
+    expect(formatTimestamp(new Date(2026, 0, 5, 0, 7).getTime())).toBe('5 Jan, 00:07');
   });
 });
 
 describe('formatPercent', () => {
-  it('is signed with one decimal and a real minus sign', () => {
-    const nlNeg = plain(formatPercent(-3.14, 'nl'));
-    expect(nlNeg).toContain('\u22123,1');
-    expect(nlNeg).toContain('%');
-    expect(nlNeg).not.toContain('-');
-    expect(plain(formatPercent(3.14, 'en'))).toBe('+3.1%');
-    expect(plain(formatPercent(0, 'en'))).toBe('0.0%');
+  it('is signed with one decimal, Dutch notation and a real minus sign', () => {
+    expect(plain(formatPercent(-3.14))).toBe('−3,1%');
+    expect(formatPercent(-3.14)).not.toContain('-');
+    expect(plain(formatPercent(3.14))).toBe('+3,1%');
+    expect(plain(formatPercent(0))).toBe('0,0%');
+    expect(plain(formatPercent(-0))).toBe('0,0%');
   });
 });
 

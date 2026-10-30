@@ -1,19 +1,14 @@
-import { useCallback } from 'react';
-import { useSettings } from '@/state/SettingsContext';
-import { en } from './en';
-import { nl, type MessageKey } from './nl';
-import type { Language } from './locale';
+import { en, type MessageKey } from './en';
 
-export { detectLanguage, isLanguage, LANGUAGES, localeFor, type Language } from './locale';
-export type { MessageKey } from './nl';
+export type { MessageKey } from './en';
 
 export type MessageParams = Record<string, string | number>;
 
-export const dictionaries: Record<Language, Record<MessageKey, string>> = { nl, en };
+const messages: Record<MessageKey, string> = en;
 
-/** Looks up `key` for `language` and replaces `{name}` placeholders from `params`. */
-export function t(language: Language, key: MessageKey, params?: MessageParams): string {
-  const template: string | undefined = dictionaries[language]?.[key];
+/** Looks up the English copy for `key` and replaces `{name}` placeholders from `params`. */
+export function t(key: MessageKey, params?: MessageParams): string {
+  const template: string | undefined = messages[key];
   if (template === undefined) return key;
   if (!params) return template;
   return template.replace(/\{(\w+)\}/g, (match, name: string) =>
@@ -21,11 +16,7 @@ export function t(language: Language, key: MessageKey, params?: MessageParams): 
   );
 }
 
-/** Translator bound to the current settings language. */
+/** Hook-shaped accessor for `t`, so components keep `const t = useT()`. */
 export function useT(): (key: MessageKey, params?: MessageParams) => string {
-  const { language } = useSettings();
-  return useCallback(
-    (key: MessageKey, params?: MessageParams) => t(language, key, params),
-    [language],
-  );
+  return t;
 }

@@ -68,7 +68,6 @@ describe('DataProvider', () => {
     const fixed = cached(0);
     render(
       <AppProviders
-        initialSettings={{ language: 'en' }}
         initialData={{ rates: fixed, quotes: { XAU: { id: 'XAU', priceUsd: 4000, updatedAt: 1 } } }}
       >
         <Probe />

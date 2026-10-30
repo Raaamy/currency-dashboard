@@ -16,40 +16,37 @@ One line per entry: `path — what / when to touch`.
 - `.prettierrc`, `.prettierignore` — Prettier settings; Markdown is excluded so docs keep their hand formatting
 - `index.html` — HTML entry: lang, viewport-fit=cover, theme-color (light/dark), apple-mobile-web-app tags, title
 - `src/main.tsx` — bootstrap: imports global.css, mounts `<AppProviders><App /></AppProviders>`, registers the service worker (`registerSW({ immediate: true })`)
-- `src/App.tsx` — layout shell: `.app` > `.layout` grid with Header, ConverterCard, MarketsSection; SettingsSheet (owns its open state)
+- `src/App.tsx` — layout shell: `.app` > `.layout` grid with Header, ConverterCard, MarketsSection
 - `src/vite-env.d.ts` — Vite client + `vite-plugin-pwa/client` types
-- `src/styles/tokens.css` — all SPEC §8 design tokens (light, dark via media query and `data-theme`); change only with the spec
+- `src/styles/tokens.css` — all SPEC §8 design tokens (light on `:root`, dark via `prefers-color-scheme` only); change only with the spec
 - `src/styles/global.css` — reset, body font, `.app`/`.layout` grid and breakpoints, safe areas, hinge, reduced motion
 - `src/lib/` — pure helpers (no React/DOM), each with a `*.test.ts` next to it
 - `src/lib/currencies.ts` — `CurrencyCode`, `Currency`, `CURRENCIES` (EUR, USD, GBP, AED); touch to add a currency
 - `src/lib/currencies.test.ts` — sanity test for the currency list
-- `src/lib/money.ts` — convert, parseAmount, roundTo, formatMoney/Number/Quantity/Timestamp/Percent, ozToGram/gramToOz, quantityFor, rateChangePct (+ `money.test.ts`)
+- `src/lib/money.ts` — `NUMBER_LOCALE` (nl-NL) / `DATE_LOCALE` (en-GB), convert, parseAmount, roundTo, formatMoney (narrowSymbol)/Number/Quantity/Timestamp/Percent, ozToGram/gramToOz, quantityFor, rateChangePct (+ `money.test.ts`)
 - `src/lib/storage.ts` — readJSON/writeJSON/removeKey on localStorage under `wissel.*`, errors swallowed (+ `storage.test.ts`)
-- `src/i18n/locale.ts` — pure `Language`, `localeFor`, `detectLanguage` (lets lib/money import them without React)
-- `src/i18n/nl.ts`, `src/i18n/en.ts` — SPEC §8 copy; `MessageKey` = keys of `nl`; add a key to both
-- `src/i18n/index.ts` — `t(language, key, params)`, `useT()`, re-exports the locale helpers (+ `index.test.tsx`)
+- `src/i18n/en.ts` — SPEC §8 copy (English only); `MessageKey` = keys of `en`
+- `src/i18n/index.ts` — `t(key, params)` and `useT()` (returns `t`) (+ `index.test.tsx`)
 - `src/data/http.ts` — the only `fetch` caller: `fetchJson` with 8 s AbortController timeout, `FetchError`, shape guards
 - `src/data/rates.ts` — open.er-api fetch, `wissel.rates` cache, `isFresh` (6 h), cache-aware `getRates` (+ `rates.test.ts`)
 - `src/data/markets.ts` — BTC (CoinGecko -> Coinbase), XAU/XAG (gold-api), `fetchMarkets`, `wissel.markets` cache (+ `markets.test.ts`)
 - `src/data/history.ts` — daily EUR snapshots (currency-api: jsDelivr -> pages.dev), latest + previous day (-1..-3), `wissel.history` cache, cache-aware `getHistory` (+ `history.test.ts`)
 - `src/data/usePolling.ts` — interval hook: runs on mount, pauses while hidden, runs again on visible (+ `usePolling.test.ts`)
 - `src/data/index.ts` — re-exports `useRates`, `useMarkets`, `useHistory`, `useRefreshAll` and the data types for components
-- `src/state/SettingsContext.tsx` — language (default `en`)/theme/base/amount persisted to `wissel.settings` with `version: 2` (older objects load as `en`); applies `data-theme`, `<html lang>`, theme-color metas (+ test)
+- `src/state/SettingsContext.tsx` — base/amount persisted to `wissel.settings` with `version: 3` (base/amount kept from any version, old language/theme ignored) (+ test)
 - `src/state/DataContext.tsx` — single owner of fetching and polling; `useRates`, `useMarkets`, `useHistory`, `useRefreshAll` (+ test)
 - `src/state/AppProviders.tsx` — Settings + Data providers; tests pass `initialSettings` (storage not read) and `initialData` (no fetch, no polling)
 - `src/test/mockFetch.ts` — `mockFetch(routes)` URL-substring fetch mock and a sample open.er-api body, for tests
 - `src/test/setup.ts` — Vitest setup (jest-dom matchers, clears localStorage after each test)
-- `src/components/Header/` — Header (no title): refresh button + "updated" caption left, settings button right (`onOpenSettings`)
+- `src/components/Header/` — Header (no title, no props): caption row with refresh button + "updated" caption (+ `Header.test.tsx`)
 - `src/components/Converter/` — ConverterCard (placeholder card until task 3)
 - `src/components/Converter/ConverterCard.tsx` — converter card: micro label, four CurrencyRows, conversion, focus-on-row-tap (+ `ConverterCard.test.tsx`)
 - `src/components/Converter/CurrencyRow.tsx` — one row: active = label + amount input, inactive = whole-row button; empty-state shimmer
 - `src/components/ui/Card.tsx` — `<section>` surface: `--surface`, `--radius-card`, `--shadow-card`, padding 20
 - `src/components/ui/SymbolBadge.tsx` — tinted 36/38/40 px circle with a glyph (`tint`: eur/usd/gbp/aed/btc/gold/silver), aria-hidden
-- `src/components/Markets/MarketsSection.tsx` — markets heading (LiveDot, "live · n s geleden" ticking every 10 s, offline glyph when stale), the rates tile first, then the three asset tiles (+ `MarketsSection.test.tsx`, covers RatesTile)
+- `src/components/Markets/MarketsSection.tsx` — section with `aria-label` "Markets" (no visible heading): the rates tile first, then the three asset tiles, then a centred status line (LiveDot, "live · ns ago" ticking every 10 s, offline glyph when stale) (+ `MarketsSection.test.tsx`, covers RatesTile)
 - `src/components/Markets/MarketTile.tsx` — one asset row: badge, unit price captions in base currency, quantity the amount buys, change pill / ≈ oz caption, shimmer when data missing
-- `src/components/Markets/RatesTile.tsx` — first tile: base-currency SymbolBadge, `1 EUR` + "Wisselkoers", 1 base unit in the other three currencies (4 decimals), shimmer without rates
+- `src/components/Markets/RatesTile.tsx` — first tile: base-currency SymbolBadge, `1 EUR` + "Exchange rate", 1 base unit in the other three currencies (4 decimals), shimmer without rates
 - `src/components/Markets/tile.module.css` — shared tile card (`.tile`) and `.loading` shimmer used by MarketTile and RatesTile
 - `src/components/ui/Pill.tsx` — rounded pill, variants up/down/neutral (24 h change)
 - `src/components/ui/LiveDot.tsx` — 6 px pulsing status dot; `muted` = grey, no pulse
-- `src/components/Settings/SettingsSheet.tsx` — native `<dialog>` settings sheet (bottom sheet < 640 px, centred above); language + appearance (+ `SettingsSheet.test.tsx`, covers Header too)
-- `src/components/Settings/Segmented.tsx` — generic radio-group segmented control with sliding thumb

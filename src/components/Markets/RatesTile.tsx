@@ -18,7 +18,7 @@ const direction = (pct: number): 'up' | 'down' | 'flat' => {
 /** Fourth markets tile (SPEC §8 "Rates tile"): 1 unit of the base currency in the other three. */
 export function RatesTile() {
   const t = useT();
-  const { language, base } = useSettings();
+  const { base } = useSettings();
   const { data: rates } = useRates();
   const { data: history } = useHistory();
   const baseCurrency = CURRENCIES.find((c) => c.code === base) ?? CURRENCIES[0];
@@ -43,7 +43,7 @@ export function RatesTile() {
               {ready ? (
                 <>
                   <span className={styles.value}>
-                    {formatNumber(convert(1, base, code, rates.rates), language, {
+                    {formatNumber(convert(1, base, code, rates.rates), {
                       minDecimals: 4,
                       maxDecimals: 4,
                     })}
@@ -55,7 +55,7 @@ export function RatesTile() {
                       data-dir={direction(pct)}
                       title={t('sinceYesterday')}
                     >
-                      {formatPercent(pct, language)}
+                      {formatPercent(pct)}
                     </span>
                   )}
                 </>
