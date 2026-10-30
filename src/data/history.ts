@@ -126,8 +126,14 @@ export function saveHistory(h: History): void {
   writeJSON(STORAGE_KEY, h);
 }
 
+/** Snapshots cached before user-chosen currencies held only six codes: refetch those. */
+export const MIN_FRESH_SNAPSHOT_CODES = 10;
+
 export function isHistoryFresh(h: History, now: number = Date.now()): boolean {
-  return now - h.fetchedAt < RATES_MAX_AGE_MS;
+  return (
+    Object.keys(h.today.rates).length >= MIN_FRESH_SNAPSHOT_CODES &&
+    now - h.fetchedAt < RATES_MAX_AGE_MS
+  );
 }
 
 export interface HistoryResult {

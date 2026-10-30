@@ -36,6 +36,54 @@ label.content {
   cursor: text;
 }
 
+/* Edit mode (SPEC §11): [remove] · badge · code + name; no amount column. */
+.editing {
+  grid-template-columns: 40px minmax(min-content, 1fr);
+}
+
+.editing.removable {
+  grid-template-columns: 22px 40px minmax(min-content, 1fr);
+}
+
+/* 22 px circle with a 44 px hit area that spills into the row padding and the column gap. */
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: -11px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  appearance: none;
+}
+
+.remove:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.removeCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+  background: var(--down);
+  /* White in light mode; dark text on the light rose in dark mode (no white token). */
+  color: var(--surface);
+  transition: transform var(--dur) var(--ease);
+}
+
+.remove:active .removeCircle {
+  transform: scale(0.9);
+}
+
 .button {
   margin: 0;
   border: 0;

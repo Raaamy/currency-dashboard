@@ -153,14 +153,14 @@ start from a green tree. Verify: unit tests for registry (names, symbols, decima
 fallback for unknown codes, stable tints), migration, invariants, `formatRate`; rates/history
 tests updated; lint/build/test pass.
 
-## Task 14 — Converter edit mode, add row, currency picker `[~]`  (tier: careful, deps: 13, parallel with 15)
+## Task 14 — Converter edit mode, add row, currency picker `[x]`  (tier: careful, deps: 13, parallel with 15)
 
 SPEC §11 "Converter card" and "Currency picker". Files: `src/components/Converter/**`,
 new `src/components/Picker/**`, the picker mount in `App.tsx`. Verify: component tests
 (add via picker, remove in edit mode, min 2, removing base moves base, search filter),
 browser check at 390 and 680 px, lint/build/test pass.
 
-## Task 15 — Rates tile chip grid `[~]`  (tier: medium, deps: 13, parallel with 14)
+## Task 15 — Rates tile chip grid `[x]`  (tier: medium, deps: 13, parallel with 14)
 
 SPEC §11 "Rates tile (chip grid)" and the 2-up asset arrangement. Files:
 `src/components/Markets/**`. Verify: component tests (chips per chosen currency, JPY

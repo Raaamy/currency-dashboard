@@ -1,8 +1,9 @@
 /* Shared market tile (asset tiles and the rates tile); tokens only.
    SPEC §8 "Responsive / foldable": `.cell` is the outer <article> and the `tile` size
    container (an element cannot query its own size); `.tile` is the card inside it.
-   Row layout from 340 px of tile width, stacked layout below. The 340 px threshold is
-   repeated in MarketTile.module.css and RatesTile.module.css; keep the three in sync. */
+   Asset tiles: row layout from 340 px of tile width, stacked layout below. The 340 px
+   threshold is repeated in MarketTile.module.css; keep the two in sync. The rates tile
+   (chip grid, SPEC §11) has one layout at every width. */
 .cell {
   container: tile / inline-size;
   display: grid;
@@ -39,14 +40,25 @@
       'caps caps caps'
       'oz oz oz';
   }
+}
 
-  /* Rates tile: badge · `1 EUR` + caption / the three lines full width. */
-  .rates {
-    grid-template-columns: 32px minmax(0, 1fr);
-    grid-template-areas:
-      'badge texts'
-      'lines lines';
-    row-gap: 10px;
+/* Rates tile: header, then the chip grid, both full width. */
+.rates {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 12px;
+}
+
+/* Cell spanning every column of the markets grid (rates tile). */
+.full {
+  grid-column: 1 / -1;
+}
+
+/* 2-up markets grid (SPEC §11): Bitcoin full width (row layout), gold and silver side by
+   side below it. */
+@container markets (min-width: 560px) {
+  .wide {
+    grid-column: 1 / -1;
   }
 }
 

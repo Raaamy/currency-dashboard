@@ -55,9 +55,9 @@ export const LEGACY_CURRENCIES = ['EUR', 'USD', 'GBP', 'AED'] as const;
 /** Hand-tuned symbol, tint and short name (Chrome's ICU says "United Arab Emirates Dirham"). */
 const OVERRIDES: Readonly<Record<string, { symbol: string; tint: CurrencyTint; name: string }>> = {
   EUR: { symbol: '€', tint: 'eur', name: 'Euro' },
-  USD: { symbol: '$', tint: 'usd', name: 'US dollar' },
-  GBP: { symbol: '£', tint: 'gbp', name: 'British pound' },
-  AED: { symbol: 'د.إ', tint: 'aed', name: 'UAE dirham' },
+  USD: { symbol: '$', tint: 'usd', name: 'US Dollar' },
+  GBP: { symbol: '£', tint: 'gbp', name: 'British Pound' },
+  AED: { symbol: 'د.إ', tint: 'aed', name: 'UAE Dirham' },
 };
 
 const GENERIC_TINTS = ['1', '2', '3', '4', '5', '6'] as const;

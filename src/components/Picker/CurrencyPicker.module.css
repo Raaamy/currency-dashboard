@@ -1,0 +1,273 @@
+/* Currency picker (SPEC §11 "Currency picker"). Tokens only, except the SPEC backdrop. */
+
+/* < 640 px: bottom sheet, full width, slides up. */
+.dialog {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: none;
+  /* Fixed height so the sheet does not shrink and jump while the search narrows results. */
+  height: 85dvh;
+  max-height: 85dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-card);
+  overscroll-behavior: contain;
+  transform: translateY(100%);
+  transition: transform var(--dur) var(--ease);
+}
+
+.dialog.isOpen {
+  transform: translateY(0);
+}
+
+.dialog::backdrop {
+  /* SPEC §11: rgba(43,40,36,.35) in both themes (no token for it). */
+  background: rgba(43, 40, 36, 0.35);
+}
+
+/* Title and search stay put; only the list scrolls. */
+.content {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+}
+
+.head {
+  position: relative;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 20px 8px;
+}
+
+.handle {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  margin-left: -18px;
+  border-radius: var(--radius-pill);
+  background: var(--line);
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  min-width: 0;
+  color: var(--text);
+  font: var(--font-title);
+  overflow-wrap: anywhere;
+}
+
+.close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease);
+}
+
+.close:active {
+  transform: scale(0.96);
+}
+
+.close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  color: var(--text-2);
+  cursor: text;
+}
+
+.search:focus-within {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: -2px;
+}
+
+.search svg {
+  flex: none;
+}
+
+/* 16 px so iOS does not zoom. */
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font: var(--font-row);
+  font-size: 16px;
+  appearance: none;
+}
+
+.input::placeholder {
+  color: var(--text-2);
+  opacity: 1;
+}
+
+.input::-webkit-search-decoration {
+  appearance: none;
+}
+
+.scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 12px calc(16px + env(safe-area-inset-bottom));
+}
+
+.section + .section {
+  margin-top: 8px;
+}
+
+.sectionTitle {
+  padding: 10px 8px 6px;
+  color: var(--text-2);
+  font: var(--font-micro);
+  letter-spacing: var(--tracking-micro);
+  text-transform: uppercase;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 20px;
+  column-gap: 12px;
+  align-items: center;
+  width: 100%;
+  min-height: 52px;
+  margin: 0;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius-row);
+  background-color: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  transition: background-color var(--dur) var(--ease);
+}
+
+@media (hover: hover) {
+  .item:hover {
+    background-color: var(--line);
+  }
+}
+
+.item:active {
+  background-color: var(--line);
+}
+
+.item[aria-disabled='true'] {
+  cursor: default;
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.texts {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.code {
+  font: var(--font-row);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+/* Long Intl names ("Bosnia-Herzegovina Convertible Mark") wrap instead of being cut. */
+.name {
+  color: var(--text-2);
+  font: var(--font-caption);
+  overflow-wrap: anywhere;
+}
+
+.check {
+  display: inline-flex;
+  justify-content: center;
+  color: var(--up);
+}
+
+.empty {
+  padding: 24px 8px;
+  color: var(--text-2);
+  font: var(--font-caption);
+  text-align: center;
+}
+
+/* >= 640 px: centred dialog, 440 px wide. */
+@media (min-width: 640px) {
+  .dialog {
+    inset: 0;
+    width: 440px;
+    max-width: calc(100% - 32px);
+    height: min(80dvh, 600px);
+    max-height: 80dvh;
+    margin: auto;
+    border-radius: var(--radius-card);
+    opacity: 0;
+    transform: scale(0.98);
+    transition:
+      opacity var(--dur) var(--ease),
+      transform var(--dur) var(--ease);
+  }
+
+  .dialog.isOpen {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .handle {
+    display: none;
+  }
+
+  .scroll {
+    padding-bottom: 16px;
+  }
+}

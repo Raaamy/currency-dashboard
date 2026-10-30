@@ -115,7 +115,11 @@ export function MarketTile({ id, stale = false }: MarketTileProps) {
 
   return (
     // Outer <article> = size container for the row/stacked layouts (tile.module.css).
-    <article className={tileStyles.cell} data-asset={id} aria-busy={!ready || undefined}>
+    <article
+      className={isBtc ? `${tileStyles.cell} ${tileStyles.wide}` : tileStyles.cell}
+      data-asset={id}
+      aria-busy={!ready || undefined}
+    >
       <div className={tileClass}>
         <span className={`${styles.badge} ${styles[`badge${id}`]}`} aria-hidden="true">
           {isBtc ? '₿' : null}

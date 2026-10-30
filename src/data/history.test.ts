@@ -45,8 +45,9 @@ const rates = (usd: number) => ({
 });
 
 const cachedHistory = (ageMs: number): History => ({
-  today: { date: '2026-10-28', rates: rates(1.112) },
-  previous: { date: '2026-10-27', rates: rates(1.1) },
+  // Ten codes, so the cache counts as a current (post-v4) snapshot.
+  today: { date: '2026-10-28', rates: { ...rates(1.112), cad: 1.5 } },
+  previous: { date: '2026-10-27', rates: { ...rates(1.1), cad: 1.5 } },
   fetchedAt: NOW - ageMs,
 });
 
@@ -130,7 +131,11 @@ describe('fetchHistory', () => {
       '@2026-10-27': { body: body('2026-10-27', 1.1) },
     });
     const history = await fetchHistory(fetchImpl);
-    expect(history).toEqual(cachedHistory(0));
+    expect(history).toEqual({
+      today: { date: '2026-10-28', rates: rates(1.112) },
+      previous: { date: '2026-10-27', rates: rates(1.1) },
+      fetchedAt: NOW,
+    });
     expect(calledUrls(fetchImpl)).toEqual([
       snapshotUrl('latest', 'cdn'),
       snapshotUrl('2026-10-27', 'cdn'),
@@ -175,6 +180,14 @@ describe('history cache', () => {
     expect(loadCachedHistory()).toEqual(cachedHistory(0));
     localStorage.setItem('wissel.history', JSON.stringify({ today: 1 }));
     expect(loadCachedHistory()).toBeNull();
+  });
+
+  it('treats a pre-v4 snapshot cache with only a few codes as stale', () => {
+    const thin: History = {
+      ...cachedHistory(0),
+      today: { date: '2026-10-28', rates: { eur: 1, usd: 1.1, gbp: 0.8 } },
+    };
+    expect(isHistoryFresh(thin, NOW)).toBe(false);
   });
 
   it('is fresh for 6 h', () => {

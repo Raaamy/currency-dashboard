@@ -22,6 +22,31 @@ export interface CurrencyRowProps {
   onPress: () => void;
   /** Inactive rows: activated by tap, click or keyboard. */
   onSelect: (event: MouseEvent<HTMLButtonElement>) => void;
+  /** Edit mode: no input, no amount, no base switch; badge, code and name only. */
+  editing?: boolean;
+  /** Edit mode: shows the remove button when given (hidden at the minimum count). */
+  onRemove?: () => void;
+  /** Edit mode: accessible name of the remove button ("Remove USD"). */
+  removeLabel?: string;
+  removeRef?: Ref<HTMLButtonElement>;
+}
+
+function MinusIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3.4"
+      strokeLinecap="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M5 12h14" />
+    </svg>
+  );
 }
 
 function blurOnEnter(event: KeyboardEvent<HTMLInputElement>) {
@@ -40,13 +65,17 @@ export function CurrencyRow({
   inputRef,
   onPress,
   onSelect,
+  editing = false,
+  onRemove,
+  removeLabel,
+  removeRef,
 }: CurrencyRowProps) {
   const amountId = useId();
   const label = `${currency.code} ${name}`;
   const rowClass = [
     styles.row,
     active ? styles.active : '',
-    loading && !active ? styles.loading : '',
+    loading && !active && !editing ? styles.loading : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -61,10 +90,31 @@ export function CurrencyRow({
     </>
   );
 
+  const editContent = (
+    <div className={`${styles.content} ${styles.editing} ${onRemove ? styles.removable : ''}`}>
+      {onRemove ? (
+        <button
+          ref={removeRef}
+          type="button"
+          className={styles.remove}
+          aria-label={removeLabel}
+          onClick={onRemove}
+        >
+          <span className={styles.removeCircle}>
+            <MinusIcon />
+          </span>
+        </button>
+      ) : null}
+      {texts}
+    </div>
+  );
+
   // The <li> stays mounted across active/inactive so its background and border transition.
   return (
     <li className={rowClass} aria-current={active ? 'true' : undefined}>
-      {active ? (
+      {editing ? (
+        editContent
+      ) : active ? (
         // A label so tapping anywhere on the active row focuses the input.
         <label className={styles.content}>
           {texts}

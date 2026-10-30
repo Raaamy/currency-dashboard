@@ -5,6 +5,7 @@ import type { InitialData } from '@/state/DataContext';
 import { AppProviders } from '@/state/AppProviders';
 import type { Settings } from '@/state/SettingsContext';
 import { t } from '@/i18n';
+import { formatRate } from '@/lib/money';
 import { MarketsSection } from './MarketsSection';
 
 const now = Date.now();
@@ -139,62 +140,99 @@ describe('MarketsSection', () => {
     expect(order).toEqual(['RATES', 'BTC', 'XAU', 'XAG']);
   });
 
-  it('shows 1 EUR in the other currencies on the rates tile', () => {
-    const { container } = renderSection();
-    const rates = tile(container, 'RATES');
-    expect(within(rates).getByRole('heading', { name: '1 EUR' })).toBeInTheDocument();
-    expect(text(rates)).toContain(t('exchangeRate'));
-    const lines = Array.from(rates.querySelectorAll('p'))
-      .map(text)
-      .filter((l) => l !== t('exchangeRate'));
-    expect(lines).toEqual(['1,1000 USD', '0,8500 GBP', '4,0000 AED']);
-  });
+  describe('rates tile (chip grid)', () => {
+    const CHOSEN = ['EUR', 'USD', 'GBP', 'JPY', 'CHF'];
+    const RATES = { EUR: 1, USD: 1.1162, GBP: 0.8358, JPY: 169.421, CHF: 0.9304, AED: 4.1 };
+    const CHIP_HISTORY: History = {
+      today: {
+        date: '2026-10-28',
+        rates: { eur: 1, usd: 1.1162, gbp: 0.8358, jpy: 169.421, chf: 0.9304 },
+      },
+      previous: {
+        date: '2026-10-27',
+        rates: { eur: 1, usd: 1.114, gbp: 0.8358, jpy: 171.0, chf: 0.93042 },
+      },
+      fetchedAt: now,
+    };
+    const chipData = (data: Partial<InitialData> = {}): Partial<InitialData> => ({
+      rates: { base: 'EUR', rates: RATES, fetchedAt: now, publishedAt: now },
+      ...data,
+    });
+    const chips = (container: HTMLElement) =>
+      Array.from(tile(container, 'RATES').querySelectorAll<HTMLElement>('li'));
+    /** [code, value, change?]; the code is the head's last child (after the decorative badge). */
+    const chipParts = (li: HTMLElement) =>
+      Array.from(li.children).map((el, i) => plain(i === 0 ? (el.lastElementChild ?? el) : el));
 
-  it('shows one line per chosen non-base currency, in settings order, with a dash when missing', () => {
-    const { container } = renderSection({ currencies: ['EUR', 'CHF', 'USD'] });
-    const lines = Array.from(tile(container, 'RATES').querySelectorAll('p'))
-      .map(text)
-      .filter((l) => l !== t('exchangeRate'));
-    expect(lines).toEqual(['— CHF', '1,1000 USD']);
-  });
+    it('shows the base header and one chip per other chosen currency, in order', () => {
+      const { container } = renderSection({ currencies: CHOSEN }, chipData());
+      const rates = tile(container, 'RATES');
+      expect(within(rates).getByRole('heading', { name: '1 EUR' })).toBeInTheDocument();
+      expect(text(rates)).toContain(t('exchangeRate'));
+      expect(chips(container).map(chipParts)).toEqual([
+        ['USD', '1,1162'],
+        ['GBP', '0,8358'],
+        ['JPY', '169,42'],
+        ['CHF', '0,9304'],
+      ]);
+    });
 
-  it('shows a single line with the default two currencies', () => {
-    const { container } = renderSection({ currencies: ['EUR', 'USD'] });
-    const lines = Array.from(tile(container, 'RATES').querySelectorAll('p'))
-      .map(text)
-      .filter((l) => l !== t('exchangeRate'));
-    expect(lines).toEqual(['1,1000 USD']);
-  });
+    it('colours the daily change by direction and labels each chip', () => {
+      const { container } = renderSection(
+        { currencies: CHOSEN },
+        chipData({ history: CHIP_HISTORY }),
+      );
+      const changes = chips(container).map((li) => {
+        const span = li.querySelector<HTMLElement>('[data-dir]');
+        return span ? { text: plain(span), dir: span.dataset.dir } : null;
+      });
+      // CHF: -0,002 % rounds to 0,0 % and stays flat.
+      expect(changes).toEqual([
+        { text: '+0,2%', dir: 'up' },
+        { text: '0,0%', dir: 'flat' },
+        { text: '-0,9%', dir: 'down' },
+        { text: '0,0%', dir: 'flat' },
+      ]);
+      const usd = chips(container)[0];
+      const label = `1 EUR = 1,1162 USD, +0,2% ${t('sinceYesterday')}`;
+      expect(usd).toHaveAttribute('aria-label', label);
+      expect(usd).toHaveAttribute('title', label);
+    });
 
-  it('follows the base currency on the rates tile', () => {
-    const { container } = renderSection({ base: 'USD' });
-    const rates = tile(container, 'RATES');
-    expect(within(rates).getByRole('heading', { name: '1 USD' })).toBeInTheDocument();
-    const lines = Array.from(rates.querySelectorAll('p'))
-      .map(text)
-      .filter((l) => l !== t('exchangeRate'));
-    expect(lines).toEqual(['0,9091 EUR', '0,7727 GBP', '3,6364 AED']);
-  });
+    it('omits the change without snapshots', () => {
+      const { container } = renderSection({ currencies: CHOSEN }, chipData({ history: null }));
+      expect(tile(container, 'RATES').querySelectorAll('[data-dir]')).toHaveLength(0);
+      expect(chips(container)[0]).toHaveAttribute('aria-label', '1 EUR = 1,1162 USD');
+    });
 
-  it('shows dashes and shimmer on the rates tile without rates', () => {
-    const { container } = renderSection({}, { rates: null });
-    const rates = tile(container, 'RATES');
-    expect(rates).toHaveAttribute('aria-busy', 'true');
-    expect(text(rates).split('—')).toHaveLength(4);
-  });
+    it('follows the base currency', () => {
+      const { container } = renderSection({ currencies: CHOSEN, base: 'USD' }, chipData());
+      const rates = tile(container, 'RATES');
+      expect(within(rates).getByRole('heading', { name: '1 USD' })).toBeInTheDocument();
+      expect(chipParts(chips(container)[0])).toEqual(['EUR', formatRate(1 / 1.1162)]);
+      expect(chips(container).map((li) => chipParts(li)[0])).toEqual(['EUR', 'GBP', 'JPY', 'CHF']);
+    });
 
-  it('shows the daily change per line on the rates tile', () => {
-    const { container } = renderSection({}, { history: HISTORY });
-    const title = t('sinceYesterday');
-    expect(changeSpans(tile(container, 'RATES'))).toEqual([
-      { text: '+10,0%', dir: 'up', title },
-      { text: '0,0%', dir: 'flat', title },
-      { text: '-4,8%', dir: 'down', title },
-    ]);
-    const lines = Array.from(tile(container, 'RATES').querySelectorAll('p'))
-      .map(plain)
-      .filter((l) => l !== t('exchangeRate'));
-    expect(lines).toEqual(['1,1000 USD+10,0%', '0,8500 GBP0,0%', '4,0000 AED-4,8%']);
+    it('shows exactly one chip with the default two currencies', () => {
+      const { container } = renderSection({ currencies: ['EUR', 'USD'] }, chipData());
+      expect(chips(container).map(chipParts)).toEqual([['USD', '1,1162']]);
+    });
+
+    it('shows a dash for a currency missing from the rates table', () => {
+      const { container } = renderSection({ currencies: ['EUR', 'SEK', 'USD'] }, chipData());
+      expect(chips(container).map(chipParts)).toEqual([
+        ['SEK', '—'],
+        ['USD', '1,1162'],
+      ]);
+    });
+
+    it('shows dashes and shimmer without rates', () => {
+      const { container } = renderSection({ currencies: CHOSEN }, { rates: null });
+      const rates = tile(container, 'RATES');
+      expect(rates).toHaveAttribute('aria-busy', 'true');
+      expect(rates.querySelector('[class*="loading"]')).not.toBeNull();
+      expect(chips(container).map((li) => chipParts(li)[1])).toEqual(['—', '—', '—', '—']);
+    });
   });
 
   it('shows daily change pills for gold and silver and falls back to it for BTC', () => {

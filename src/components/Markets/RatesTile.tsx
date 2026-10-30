@@ -1,13 +1,11 @@
 import { useHistory, useRates } from '@/data';
 import { useT } from '@/i18n';
 import { getCurrency } from '@/lib/currencies';
-import { convert, formatNumber, formatPercent, rateChangePct, roundTo } from '@/lib/money';
+import { convert, DASH, formatPercent, formatRate, rateChangePct, roundTo } from '@/lib/money';
 import { useSettings } from '@/state/SettingsContext';
 import { SymbolBadge } from '@/components/ui/SymbolBadge';
 import tileStyles from './tile.module.css';
 import styles from './RatesTile.module.css';
-
-const DASH = '—';
 
 /** Direction of the change as displayed (1 decimal), so `0,0%` is never coloured. */
 const direction = (pct: number): 'up' | 'down' | 'flat' => {
@@ -16,8 +14,9 @@ const direction = (pct: number): 'up' | 'down' | 'flat' => {
 };
 
 /**
- * First markets tile (SPEC §8 "Rates tile"): 1 unit of the base currency in each other chosen
- * currency (settings order); codes missing from the rates table show `—`.
+ * First markets tile, full width (SPEC §11 "Rates tile (chip grid)"): 1 unit of the base
+ * currency as one chip per other chosen currency (settings order) with the daily change;
+ * codes missing from the rates table show `—`.
  */
 export function RatesTile() {
   const t = useT();
@@ -32,52 +31,47 @@ export function RatesTile() {
     .join(' ');
 
   return (
-    // Outer <article> = size container for the row/stacked layouts (tile.module.css).
-    <article className={tileStyles.cell} data-asset="RATES" aria-busy={!ready || undefined}>
+    <article
+      className={`${tileStyles.cell} ${tileStyles.full}`}
+      data-asset="RATES"
+      aria-busy={!ready || undefined}
+    >
       <div className={tileClass}>
-        <SymbolBadge
-          tint={baseCurrency.tint}
-          symbol={baseCurrency.symbol}
-          size={38}
-          className={styles.badge}
-        />
-        <div className={styles.texts}>
-          <h3 className={styles.name}>1 {base}</h3>
-          <p className={styles.caption}>{t('exchangeRate')}</p>
+        <div className={styles.header}>
+          <SymbolBadge tint={baseCurrency.tint} symbol={baseCurrency.symbol} size={28} />
+          <div className={styles.texts}>
+            <h3 className={styles.name}>1 {base}</h3>
+            <p className={styles.caption}>{t('exchangeRate')}</p>
+          </div>
         </div>
-        <div className={styles.lines}>
+        <ul className={styles.chips}>
           {others.map((code) => {
-            const value = ready ? convert(1, base, code, rates.rates) : NaN;
+            const currency = getCurrency(code);
+            const value = formatRate(ready ? convert(1, base, code, rates.rates) : NaN);
             const pct = history
               ? rateChangePct(history.today.rates, history.previous.rates, base, code)
               : null;
+            const label =
+              value === DASH
+                ? `1 ${base} = ${DASH} ${code}`
+                : `1 ${base} = ${value} ${code}` +
+                  (pct !== null ? `, ${formatPercent(pct)} ${t('sinceYesterday')}` : '');
             return (
-              <p key={code} className={styles.line}>
-                {ready ? (
-                  <>
-                    <span className={styles.value}>
-                      {Number.isFinite(value)
-                        ? formatNumber(value, { minDecimals: 4, maxDecimals: 4 })
-                        : DASH}
-                    </span>{' '}
-                    <span className={styles.code}>{code}</span>
-                    {pct !== null && (
-                      <span
-                        className={styles.change}
-                        data-dir={direction(pct)}
-                        title={t('sinceYesterday')}
-                      >
-                        {formatPercent(pct)}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  <span className={styles.value}>{DASH}</span>
+              <li key={code} className={styles.chip} title={label} aria-label={label}>
+                <span className={styles.head}>
+                  <SymbolBadge tint={currency.tint} symbol={currency.symbol} size={18} />
+                  <span className={styles.code}>{code}</span>
+                </span>
+                <span className={styles.value}>{value}</span>
+                {pct !== null && (
+                  <span className={styles.change} data-dir={direction(pct)}>
+                    {formatPercent(pct)}
+                  </span>
                 )}
-              </p>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
     </article>
   );
