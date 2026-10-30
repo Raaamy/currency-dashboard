@@ -495,3 +495,126 @@ no `window.location` routing.
 | dnd.moved | {code} moved to position {pos} of {total}. |
 | dnd.dropped | {code} dropped at position {pos} of {total}. |
 | dnd.cancelled | Reordering cancelled. {code} returned to position {pos}. |
+
+## 13. "Faster at a glance" redesign (supersedes the §8 screen and the §11 rates tile)
+
+Source of truth for the look: the owner's design canvas
+https://claude.ai/artifact/5C1ey6SPo4LwK22nFNJRXa (artboards "Desktop" 1280 fluid and
+"iPhone" 390x844, dark). Its markup and values are copied into this section; where this
+section and the canvas differ, this section wins. Owner's changes to the canvas: NO
+quick-amount chips (1 / 100 / 1K / 10K / 100K), and the hint under the input reads
+"Click any result to convert from that currency or metal." (no "Tip:").
+
+### Items model (currencies AND assets)
+- An item is a fiat code (`EUR`, `USD`, …) or an asset id: `XAU` (Gold), `XAG` (Silver),
+  `BTC` (Bitcoin). The user's list is `settings.items: string[]` (order = display order).
+  Any item can be the base (the "convert from" item), including Gold and Bitcoin.
+- Settings v5 `{ items, base, amount, metalUnit }`, `metalUnit: 'g' | 'oz' | 'kg'`
+  (default `g`). Defaults: `items = ['EUR','USD','XAU','XAG','BTC']`, `base = 'EUR'`.
+  Migration from v4: `items = currencies + ['XAU','XAG','BTC']` (they always saw the
+  markets); from < 4: legacy four + the three assets. Invariants: >= 2 items, no
+  duplicates, base in items (removing the base makes the first remaining item the base).
+- Value of one unit of an item in EUR (`eurPer(item, metalUnit)`): fiat `1 / rates[code]`;
+  BTC `convert(priceUsd, 'USD', 'EUR')`; metals `convert(priceUsdPerOz, 'USD', 'EUR') /
+  31.1034768 * gramsPerUnit` with `g = 1`, `oz = 31.1034768`, `kg = 1000`. Missing data ->
+  `NaN` -> the UI shows `—`.
+- Converted amount of target `t`: `amount * eurPer(base) / eurPer(t)`.
+- Display decimals of a converted amount: fiat = currency decimals (Intl); BTC = 6 below
+  1, else 4; metals: `g` 2 below 100 else 0, `oz` 2, `kg` 3.
+- Input decimals (for `formatAmountInput`) when the base is an asset: BTC 8, metal `g` 2,
+  `oz` 3, `kg` 3.
+- Rate line per result: if the target is fiat: `1 {L(base)} = {r} {L(target)}`; if the
+  target is an asset: `1 {L(target)} = {r} {L(base)}`. `L(x)` = the code for fiat, `{unit}
+  {name lower}` for metals (`g gold`, `oz silver`), `BTC` for Bitcoin. `r` decimals: 0 from
+  10.000, 2 from 10, 4 from 0,01, else 6 (nl-NL).
+- Change badge per result: daily snapshot change of the quantity shown in the rate line,
+  via `rateChangePct(today, previous, from, to)` with the same from/to as the rate line
+  (`xau`, `xag`, `btc` exist in the snapshots). Omitted without snapshots. Badge: rounded
+  to 1 decimal; 0,0% neutral, > 0 up, < 0 down.
+- Tapping/clicking a result makes it the base and sets the amount to that result's value
+  (formatted with `formatAmountInput` for the new base's input decimals).
+
+### Colours
+- Dark = the canvas: `--bg #262422`, `--surface #363230`, `--line #423c38` (result card
+  border), `--text #f3eee8`, `--text-2 #b3aba1`, `--accent #f2a66b`, `--input-bg #45382c`,
+  `--input-border #8a6a48`, `--input-text #fbf7f2`, segmented track `--surface`, active
+  segment `#4a4440` (`--seg-active`). Badges: up `#86e3ad` on `rgba(111,211,155,.14)`,
+  down `#ffa3a3` on `rgba(242,139,139,.15)`, neutral `#c4bcb2` on `rgba(255,255,255,.07)`
+  (tokens `--up/--up-soft/--down/--down-soft/--flat/--flat-soft`). Live dot `#6fd39b`,
+  live text `#8fd9ad` (`--live`, `--live-text`). Icon tints dark: EUR `#2f3a5c`/fg
+  `#e3e8ff`, USD `#264536`/`#d6f5e3`, GBP `#3e2f4c`/`#efe2ff`, AED `#4a3628`/`#ffe6cf`, BTC
+  `#4f3720`/`#ffd9a8` (`--tint-x` + new `--tint-x-fg`); generic tints keep `--tint-1..6`
+  with `--text`. Metals: `--tint-gold: radial-gradient(circle at 32% 30%, #f6dc8c,
+  #c99a36 60%, #9c7424)`, `--tint-silver: radial-gradient(circle at 32% 30%, #f2f4f8,
+  #b8bfcc 60%, #8a93a3)` (both schemes).
+- Light: keep today's light tokens; `--input-bg = --surface-2` (`#FBF1E8`),
+  `--input-border = color-mix(in srgb, var(--accent) 45%, transparent)`, `--input-text =
+  --text`, `--seg-active = --surface` with `--shadow-card` at half strength, `--live
+  #4F9E78`, `--live-text #3F8A65`, `--flat #8A827A` on `rgba(43,40,36,.06)`, icon fg =
+  `--text`. Contrast >= 4.5:1 for all text.
+- Font stays Nunito; numbers tabular.
+
+### Screen (one page)
+- **Top bar.** Left: 44 px round refresh button (surface background on wide, transparent
+  on narrow) + "Rates updated 30 Oct, 01:02" (15 px, `--text`-ish) with under it (wide) or
+  at the far right (narrow) the live status: 8 px dot + "Live · 9s ago" (wide) / "Live"
+  (narrow) in `--live-text`; stale: grey dot + "Offline". Right on wide layouts: "Metals
+  in" + segmented `g | oz | kg` (only when the list contains a metal).
+- **Convert card** (`--surface`, radius 28 wide / 24 narrow, padding 24 / 16):
+  - Wide: header "CONVERT FROM" (13 px, tracking .08em, `--text-2`) + "Edit" (accent,
+    16/700, 44 px hit area); base row: 52 px icon + code 22/800 over name 15 `--text-2`
+    (metals/BTC: name on top, code under); label "Amount in EUR" / "Amount in g gold" (13
+    px `--text-2`, `<label for>`); the input: full width, `--input-bg`, 1 px
+    `--input-border`, radius 18, padding 14 18, 44/800, right-aligned, `--input-text`;
+    the hint "Click any result to convert from that currency or metal." (14 px,
+    `--text-2`); "Add currency or asset" button (48 px dashed accent circle + plus, 17/700
+    accent).
+  - Narrow (< 560 px of card width): one row: 44 px icon, code 18/800 over name 13, and
+    the input inline (flex 1, radius 16, padding 10 14, 30/800). Below the card: a line
+    with "TAP A ROW TO CONVERT FROM IT" (12 px, tracking .08em) left and the `g | oz | kg`
+    segmented control right (when a metal is listed). "Edit" sits in the list card
+    header on narrow (right-aligned above the rows), "Add currency or asset" below the
+    list (40 px dashed circle, 16/700).
+- **Results** (every item except the base, in list order), a `results` container:
+  - >= 560 px wide: grid `repeat(auto-fill, minmax(240px, 1fr))`, gap 16. Card = a
+    `<button>`: `--surface`, 1 px `--line` border, radius 24, padding 20, min-height 168,
+    gap 14: top row = 44 px icon + title 17/800 over name 13 `--text-2` (fiat: code over
+    name; assets: name over code) and the badge right (14/700, radius 12, padding 4 10);
+    middle = amount 30/800 + unit 16/700 `--text-2`-ish (unit = code, or `g`/`oz`/`kg` for
+    metals, `BTC`); bottom = rate line 14 `--text-2`.
+  - < 560 px: one `--surface` card (radius 24, padding 6 0) with rows = `<button>`s, min
+    height 64, padding 10 16, gap 12: 40 px icon; title 16/800 over the rate line 12
+    `--text-2` (wraps rather than ellipsis); right: amount 18/800 + unit 13, under it the
+    badge 12/700 (radius 8, padding 1 7).
+  - Hover/press: border/background shifts one step (`--line` → `--text-2` at 30 %);
+    focus-visible ring 2 px accent.
+- **Layout.** >= 900 px: top bar full width, then convert card (flex 1 1 340, max 420)
+  left and results (flex 999 1 560) right, gap 24, max-width 1200 centred. < 900 px: top
+  bar, convert card full width, (narrow line), results. Gutters 16 / 24 from 640 px; safe
+  areas as before. No text truncation anywhere (wrap instead).
+- **Edit mode** (Edit -> Done): the results area becomes one sortable list of ALL items
+  (base included, marked with a small "From" pill), each row: remove button (hidden at
+  2 items), icon, title + name, drag handle (dnd-kit as §12). Tapping rows does nothing in
+  edit mode. "Add currency or asset" stays visible.
+- **Picker** ("Add currency or asset"): as §11, plus a first section "ASSETS" (Gold,
+  Silver, Bitcoin, with their badges) above "POPULAR"; search also matches asset names.
+- Removed: the markets section, the rates tile, the converter's per-currency rows, the
+  quick-amount chips (never built). Metal per-ounce/per-gram captions and the BTC
+  CoinGecko 24 h figure are dropped (the rate line and snapshot change replace them).
+
+### Copy (en) additions
+| key | en |
+|-----|----|
+| convertFrom | Convert from |
+| amountIn | Amount in {unit} |
+| clickHint | Click any result to convert from that currency or metal. |
+| tapHint | Tap a row to convert from it |
+| addItem | Add currency or asset |
+| metalsIn | Metals in |
+| liveAgo | Live · {ago} |
+| liveShort | Live |
+| offlineShort | Offline |
+| updatedShort | Updated {time} |
+| assets | Assets |
+| fromPill | From |
+| unit.g / unit.oz / unit.kg | g / oz / kg |
