@@ -10,7 +10,7 @@ One line per entry: `path — what / when to touch`.
 - `package.json` — deps and scripts (dev, build, preview, lint, format, test, test:watch); touch when adding deps/scripts
 - `vite.config.ts` — Vite (`base: './'`, `@/` alias) + Vitest config (jsdom, globals, setup file) + VitePWA (autoUpdate, manifest, precache, NetworkFirst `wissel-api` cache for the API hosts)
 - `pwa-assets.config.ts` — `@vite-pwa/assets-generator` config (minimal2023 preset, apricot maskable/apple bg); run `npm run icons`
-- `public/` — `icon.svg` (source icon) + generated favicon.ico, apple-touch-icon-180x180, pwa-64/192/512, maskable-icon-512 PNGs
+- `public/` — `icon.svg` (source icon: white exchange arrows on an apricot rounded square) + generated favicon.ico, apple-touch-icon-180x180, pwa-64/192/512, maskable-icon-512 PNGs
 - `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json` — strict TS; `@/*` path alias (keep in sync with vite.config.ts)
 - `eslint.config.js` — ESLint flat config from the Vite React TS template
 - `.prettierrc`, `.prettierignore` — Prettier settings; Markdown is excluded so docs keep their hand formatting
@@ -34,20 +34,20 @@ One line per entry: `path — what / when to touch`.
 - `src/data/history.ts` — daily EUR snapshots (currency-api: jsDelivr -> pages.dev), latest + previous day (-1..-3), `wissel.history` cache, cache-aware `getHistory` (+ `history.test.ts`)
 - `src/data/usePolling.ts` — interval hook: runs on mount, pauses while hidden, runs again on visible (+ `usePolling.test.ts`)
 - `src/data/index.ts` — re-exports `useRates`, `useMarkets`, `useHistory`, `useRefreshAll` and the data types for components
-- `src/state/SettingsContext.tsx` — language/theme/base/amount persisted to `wissel.settings`; applies `data-theme`, `<html lang>`, theme-color metas (+ test)
+- `src/state/SettingsContext.tsx` — language (default `en`)/theme/base/amount persisted to `wissel.settings` with `version: 2` (older objects load as `en`); applies `data-theme`, `<html lang>`, theme-color metas (+ test)
 - `src/state/DataContext.tsx` — single owner of fetching and polling; `useRates`, `useMarkets`, `useHistory`, `useRefreshAll` (+ test)
 - `src/state/AppProviders.tsx` — Settings + Data providers; tests pass `initialSettings` (storage not read) and `initialData` (no fetch, no polling)
 - `src/test/mockFetch.ts` — `mockFetch(routes)` URL-substring fetch mock and a sample open.er-api body, for tests
 - `src/test/setup.ts` — Vitest setup (jest-dom matchers, clears localStorage after each test)
-- `src/components/Header/` — Header: brand, refresh button + "updated" caption, settings button (`onOpenSettings`)
+- `src/components/Header/` — Header (no title): refresh button + "updated" caption left, settings button right (`onOpenSettings`)
 - `src/components/Converter/` — ConverterCard (placeholder card until task 3)
 - `src/components/Converter/ConverterCard.tsx` — converter card: micro label, four CurrencyRows, conversion, focus-on-row-tap (+ `ConverterCard.test.tsx`)
 - `src/components/Converter/CurrencyRow.tsx` — one row: active = label + amount input, inactive = whole-row button; empty-state shimmer
 - `src/components/ui/Card.tsx` — `<section>` surface: `--surface`, `--radius-card`, `--shadow-card`, padding 20
 - `src/components/ui/SymbolBadge.tsx` — tinted 36/38/40 px circle with a glyph (`tint`: eur/usd/gbp/aed/btc/gold/silver), aria-hidden
-- `src/components/Markets/MarketsSection.tsx` — markets heading (LiveDot, "live · n s geleden" ticking every 10 s, offline glyph when stale) the three asset tiles and the rates tile (+ `MarketsSection.test.tsx`, covers RatesTile)
+- `src/components/Markets/MarketsSection.tsx` — markets heading (LiveDot, "live · n s geleden" ticking every 10 s, offline glyph when stale), the rates tile first, then the three asset tiles (+ `MarketsSection.test.tsx`, covers RatesTile)
 - `src/components/Markets/MarketTile.tsx` — one asset row: badge, unit price captions in base currency, quantity the amount buys, change pill / ≈ oz caption, shimmer when data missing
-- `src/components/Markets/RatesTile.tsx` — fourth tile: base-currency SymbolBadge, `1 EUR` + "Wisselkoers", 1 base unit in the other three currencies (4 decimals), shimmer without rates
+- `src/components/Markets/RatesTile.tsx` — first tile: base-currency SymbolBadge, `1 EUR` + "Wisselkoers", 1 base unit in the other three currencies (4 decimals), shimmer without rates
 - `src/components/Markets/tile.module.css` — shared tile card (`.tile`) and `.loading` shimmer used by MarketTile and RatesTile
 - `src/components/ui/Pill.tsx` — rounded pill, variants up/down/neutral (24 h change)
 - `src/components/ui/LiveDot.tsx` — 6 px pulsing status dot; `muted` = grey, no pulse

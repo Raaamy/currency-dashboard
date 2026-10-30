@@ -109,6 +109,14 @@ describe('MarketsSection', () => {
     expect(text(btc)).toContain('—');
   });
 
+  it('renders the rates tile before the market tiles', () => {
+    const { container } = renderSection();
+    const order = Array.from(container.querySelectorAll<HTMLElement>('[data-asset]')).map(
+      (el) => el.dataset.asset,
+    );
+    expect(order).toEqual(['RATES', 'BTC', 'XAU', 'XAG']);
+  });
+
   it('shows 1 EUR in the other currencies on the rates tile', () => {
     const { container } = renderSection();
     const rates = tile(container, 'RATES');

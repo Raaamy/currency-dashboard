@@ -7,8 +7,8 @@ export const localeFor = (l: Language): string => (l === 'nl' ? 'nl-NL' : 'en-GB
 
 export const isLanguage = (value: unknown): value is Language => value === 'nl' || value === 'en';
 
-/** `nl` when the browser language starts with `nl`, otherwise `en`. Safe without `navigator`. */
-export const detectLanguage = (): Language => {
-  if (typeof navigator === 'undefined' || typeof navigator.language !== 'string') return 'en';
-  return navigator.language.toLowerCase().startsWith('nl') ? 'nl' : 'en';
-};
+/**
+ * Default language for a first visit: always `en`, whatever the browser language
+ * (Dutch is opt-in from Settings). Kept as a function so callers stay unchanged.
+ */
+export const detectLanguage = (): Language => 'en';

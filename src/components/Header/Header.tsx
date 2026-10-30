@@ -72,24 +72,21 @@ export function Header({ onOpenSettings }: HeaderProps) {
 
   return (
     <header className={styles.header}>
-      <div className={styles.brand}>
-        <h1 className={styles.title}>Wissel</h1>
-        <p className={styles.caption}>
-          <button
-            type="button"
-            className={styles.refresh}
-            onClick={onRefresh}
-            aria-label={t('refresh')}
-            title={t('refresh')}
-            aria-busy={spinning || undefined}
-          >
-            <span className={spinning ? `${styles.icon} ${styles.spin}` : styles.icon}>
-              <RefreshIcon />
-            </span>
-          </button>
-          <span>{t('updated', { time })}</span>
-        </p>
-      </div>
+      <p className={styles.caption}>
+        <button
+          type="button"
+          className={styles.refresh}
+          onClick={onRefresh}
+          aria-label={t('refresh')}
+          title={t('refresh')}
+          aria-busy={spinning || undefined}
+        >
+          <span className={spinning ? `${styles.icon} ${styles.spin}` : styles.icon}>
+            <RefreshIcon />
+          </span>
+        </button>
+        <span>{t('updated', { time })}</span>
+      </p>
       <button
         type="button"
         className={styles.settings}

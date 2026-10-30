@@ -31,7 +31,7 @@ function CloudOffIcon() {
   );
 }
 
-/** Markets heading (live / offline state), the BTC, gold and silver tiles and the rates tile (SPEC §8). */
+/** Markets heading (live / offline state), the rates tile and the BTC, gold and silver tiles (SPEC §8). */
 export function MarketsSection() {
   const t = useT();
   const headingId = useId();
@@ -73,10 +73,10 @@ export function MarketsSection() {
         {caption !== null ? <span className={styles.caption}>{caption}</span> : null}
       </div>
       <div className={styles.tiles}>
+        <RatesTile />
         {ASSETS.map((id) => (
           <MarketTile key={id} id={id} stale={stale} />
         ))}
-        <RatesTile />
       </div>
     </section>
   );

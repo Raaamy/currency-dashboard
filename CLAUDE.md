@@ -1,4 +1,4 @@
-# Wissel (currency converter)
+# Currency Dashboard (currency converter)
 
 Stack: Vite 7 + React 19 + TypeScript (strict), plain CSS modules + tokens, Vitest. Static SPA, Capacitor-ready. Node 22, npm.
 

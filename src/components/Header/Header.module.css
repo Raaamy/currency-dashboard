@@ -1,26 +1,16 @@
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-}
-
-.brand {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.title {
-  font: var(--font-title);
-  color: var(--text);
+  min-height: 44px;
 }
 
 .caption {
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
   font: var(--font-caption);
   color: var(--text-2);
 }

@@ -1,4 +1,6 @@
-# Wissel
+# Currency Dashboard
+
+Live: https://raaamy.github.io/currency-dashboard/
 
 Currency converter (EUR, USD, GBP, AED) with live bitcoin, gold and silver prices; installable PWA.
 

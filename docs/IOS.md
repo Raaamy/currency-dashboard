@@ -13,7 +13,7 @@ Wraps the static `dist/` build in a native iOS shell. Documented, not executed (
 
 ```sh
 npm i @capacitor/core @capacitor/cli @capacitor/ios
-npx cap init Wissel nl.wissel.app --web-dir dist
+npx cap init "Currency Dashboard" com.ramy.currencydashboard --web-dir dist
 npm run build
 npx cap add ios
 npx cap sync ios
@@ -28,7 +28,7 @@ npm run build && npx cap sync ios
 
 ## Xcode
 
-- Target > General: display name `Wissel`, bundle id `nl.wissel.app`, select your team.
+- Target > General: display name `Currency Dashboard`, bundle id `com.ramy.currencydashboard`, select your team.
 - App icon: export `public/icon.svg` to a 1024x1024 PNG and drop it into
   `App/Assets.xcassets/AppIcon` (single-size icon is fine on Xcode 16).
 - The default scheme settings (`capacitor://localhost` on iOS; `server.androidScheme` only

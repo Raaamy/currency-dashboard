@@ -29,6 +29,11 @@ export interface SettingsApi extends Settings {
 }
 
 const STORAGE_KEY = 'settings';
+/**
+ * Version written with the stored settings. v2 made English the default: objects stored
+ * without `version >= 2` (v1, when the language followed the browser) load as `en`.
+ */
+export const SETTINGS_VERSION = 2;
 /** Must match the `--bg` token per scheme and the theme-color metas in index.html. */
 export const THEME_COLOR = { light: '#F6F3EE', dark: '#1C1A18' } as const;
 
@@ -42,14 +47,18 @@ export const defaultSettings = (): Settings => ({
   amount: '',
 });
 
-/** Stored settings validated field by field and merged over the defaults. */
+/**
+ * Stored settings validated field by field and merged over the defaults. Settings stored
+ * before `SETTINGS_VERSION` 2 keep theme, base and amount but reset the language to `en`.
+ */
 export function loadSettings(): Settings {
   const stored = readJSON<unknown>(STORAGE_KEY, null);
   const settings = defaultSettings();
   if (typeof stored !== 'object' || stored === null) return settings;
   const s = stored as Record<string, unknown>;
+  const current = typeof s.version === 'number' && s.version >= 2;
   return {
-    language: isLanguage(s.language) ? s.language : settings.language,
+    language: current && isLanguage(s.language) ? s.language : 'en',
     theme: isTheme(s.theme) ? s.theme : settings.theme,
     base: isCurrency(s.base) ? s.base : settings.base,
     amount: typeof s.amount === 'string' ? s.amount : settings.amount,
@@ -86,7 +95,7 @@ export function SettingsProvider({ children, initialSettings }: SettingsProvider
   );
 
   useEffect(() => {
-    writeJSON(STORAGE_KEY, settings);
+    writeJSON(STORAGE_KEY, { ...settings, version: SETTINGS_VERSION });
   }, [settings]);
 
   useEffect(() => {

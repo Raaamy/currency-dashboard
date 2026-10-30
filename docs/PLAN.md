@@ -1,4 +1,4 @@
-# Wissel — plan
+# Currency Dashboard — plan
 
 Status legend: `[ ]` pending · `[~]` in progress · `[x]` accepted.
 Every brief references `docs/SPEC.md` by section instead of restating it.
@@ -17,7 +17,7 @@ layout shell mounting four placeholder components (`Header`, `ConverterCard`,
 `MarketsSection`, `SettingsSheet`) each rendering a labelled empty card so the grid can
 be seen. Create `lib/currencies.ts` with the four currencies. Add `index.html` meta:
 viewport `viewport-fit=cover`, theme-color for both schemes, apple-mobile-web-app tags,
-title "Wissel". Scripts: `dev`, `build`, `preview`, `lint`, `format`, `test`,
+title "Currency Dashboard". Scripts: `dev`, `build`, `preview`, `lint`, `format`, `test`,
 `test:watch`. Update `filemap.md`.
 Verify: `npm run build && npm run lint && npm test` pass (one trivial test), `npm run dev`
 serves the shell with visible placeholder cards at 390 px and 904 px.
@@ -80,10 +80,10 @@ caption language; choosing Dark sets `data-theme="dark"` on `<html>`). Manual ch
 
 ## Task 6 — PWA, icons, iOS docs `[x]`  (tier: light, deps: 3, 4, 5)
 
-Add `public/icon.svg` (soft apricot rounded square, white "W" in Nunito-like geometry),
+Add `public/icon.svg` (soft apricot rounded square, two opposing horizontal arrows (exchange symbol), white, round caps, stroke ~64 on a 512 grid),
 generate the icon set with `@vite-pwa/assets-generator`, configure `vite-plugin-pwa`
 (autoUpdate, precache app shell, runtime `NetworkFirst` for the three API hosts with a
-24 h fallback cache), manifest (name "Wissel", short_name "Wissel", display standalone,
+24 h fallback cache), manifest (name "Currency Dashboard", short_name "Currency Dashboard", display standalone,
 background/theme colors from tokens). Write `docs/IOS.md` per SPEC §9. Update
 `filemap.md` and `README.md` (run/build/test in five lines).
 Verify: `npm run build` emits `manifest.webmanifest` and `sw.js`; `npm run preview` ->
@@ -114,3 +114,15 @@ and "Rates tile"). Verify: unit tests for `rateChangePct` (both directions, eur=
 unchanged -> 0), for the history fetch (latest + previous day, 404 fallback to -2, cache,
 CDN -> pages.dev fallback), component tests for the pills/texts with fixed snapshots;
 lint/build/test pass; manual check at 390 and 904 px.
+
+## Task 9 — Rename docs to Currency Dashboard `[x]`  (tier: light, deps: 8)
+
+Product name "Wissel" -> "Currency Dashboard" in all docs; header without title, English default,
+rates tile first, exchange-arrows icon recorded in SPEC.
+
+## Task 10 — English default, no title, rates first `[x]`  (tier: medium, deps: 8)
+
+Code side of the rename: remove the header `<h1>`, English as default language with a one-time
+settings migration (version 2), rates tile first in the markets section, `<title>`, manifest,
+apple-mobile-web-app-title and package name "Currency Dashboard" / `currency-dashboard`, new
+exchange-arrows icon regenerated. Verify: lint/build/test pass, manual check at 390 and 904 px.

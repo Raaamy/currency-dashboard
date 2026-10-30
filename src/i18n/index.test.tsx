@@ -44,12 +44,12 @@ describe('localeFor / detectLanguage', () => {
     expect(localeFor('en')).toBe('en-GB');
   });
 
-  it('detects nl from navigator.language, else en', () => {
+  it('defaults to en whatever navigator.language says', () => {
     const spy = vi.spyOn(navigator, 'language', 'get');
     spy.mockReturnValue('nl-BE');
-    expect(detectLanguage()).toBe('nl');
+    expect(detectLanguage()).toBe('en');
     spy.mockReturnValue('NL');
-    expect(detectLanguage()).toBe('nl');
+    expect(detectLanguage()).toBe('en');
     spy.mockReturnValue('en-US');
     expect(detectLanguage()).toBe('en');
     spy.mockReturnValue('de-DE');

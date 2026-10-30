@@ -1,5 +1,11 @@
 import { act, render, screen } from '@testing-library/react';
-import { SettingsProvider, THEME_COLOR, useSettings, type SettingsApi } from './SettingsContext';
+import {
+  SETTINGS_VERSION,
+  SettingsProvider,
+  THEME_COLOR,
+  useSettings,
+  type SettingsApi,
+} from './SettingsContext';
 
 let api: SettingsApi;
 function Probe() {
@@ -52,36 +58,72 @@ describe('SettingsProvider theme', () => {
 });
 
 describe('SettingsProvider state', () => {
-  it('uses defaults, persists every change and sets <html lang>', () => {
+  it('defaults to en (even for a Dutch browser), persists every change and sets <html lang>', () => {
     vi.spyOn(navigator, 'language', 'get').mockReturnValue('nl-NL');
     render(
       <SettingsProvider>
         <Probe />
       </SettingsProvider>,
     );
-    expect(api).toMatchObject({ language: 'nl', theme: 'system', base: 'EUR', amount: '' });
-    expect(document.documentElement.lang).toBe('nl');
+    expect(api).toMatchObject({ language: 'en', theme: 'system', base: 'EUR', amount: '' });
+    expect(document.documentElement.lang).toBe('en');
+    expect(JSON.parse(localStorage.getItem('wissel.settings') ?? 'null')).toMatchObject({
+      version: SETTINGS_VERSION,
+    });
 
     act(() => {
-      api.setLanguage('en');
+      api.setLanguage('nl');
       api.setBase('GBP');
       api.setAmount('1.234,56');
     });
-    expect(api).toMatchObject({ language: 'en', base: 'GBP', amount: '1.234,56' });
-    expect(document.documentElement.lang).toBe('en');
+    expect(api).toMatchObject({ language: 'nl', base: 'GBP', amount: '1.234,56' });
+    expect(document.documentElement.lang).toBe('nl');
     expect(JSON.parse(localStorage.getItem('wissel.settings') ?? 'null')).toEqual({
-      language: 'en',
+      language: 'nl',
       theme: 'system',
       base: 'GBP',
       amount: '1.234,56',
+      version: 2,
     });
     vi.restoreAllMocks();
+  });
+
+  it('migrates settings stored without a version to en, keeping the other fields', () => {
+    localStorage.setItem(
+      'wissel.settings',
+      JSON.stringify({ language: 'nl', theme: 'dark', base: 'GBP', amount: '10' }),
+    );
+    render(
+      <SettingsProvider>
+        <Probe />
+      </SettingsProvider>,
+    );
+    expect(api).toMatchObject({ language: 'en', theme: 'dark', base: 'GBP', amount: '10' });
+    expect(document.documentElement.lang).toBe('en');
+    expect(JSON.parse(localStorage.getItem('wissel.settings') ?? 'null')).toEqual({
+      language: 'en',
+      theme: 'dark',
+      base: 'GBP',
+      amount: '10',
+      version: 2,
+    });
+  });
+
+  it('keeps the stored language from version 2 on', () => {
+    localStorage.setItem('wissel.settings', JSON.stringify({ language: 'nl', version: 2 }));
+    render(
+      <SettingsProvider>
+        <Probe />
+      </SettingsProvider>,
+    );
+    expect(api.language).toBe('nl');
+    expect(document.documentElement.lang).toBe('nl');
   });
 
   it('loads stored settings, ignoring invalid fields', () => {
     localStorage.setItem(
       'wissel.settings',
-      JSON.stringify({ language: 'en', theme: 'purple', base: 'AED', amount: 12 }),
+      JSON.stringify({ language: 'en', theme: 'purple', base: 'AED', amount: 12, version: 2 }),
     );
     render(
       <SettingsProvider>
