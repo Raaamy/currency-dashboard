@@ -220,7 +220,8 @@ refresh icon button (tap = refresh everything) and "Rates updated 29 Oct, 02:02"
 - No visible heading (the section has `aria-label` "Markets"); the live/offline status line
   (LiveDot + caption, e.g. "live · 12s ago" or cloud-off + "offline") is centred below the
   tiles.
-- The rates tile followed by three MarketTiles stacked as full-width rows, gap 10 (narrow and wide alike). Tile:
+- The rates tile followed by three MarketTiles, gap 10, in the markets grid (see
+  "Responsive / foldable" for the grid and the row/stacked tile layouts). Row layout tile:
   card styling, `--radius-row` + 4 px (20 px), padding 14 16; layout = badge · texts ·
   right-aligned numbers:
   - 38 px badge (BTC: `--tint-btc` with ₿; gold/silver: metallic gradient circle, no
@@ -253,11 +254,36 @@ refresh icon button (tap = refresh everything) and "Rates updated 29 Oct, 02:02"
 
 ### Responsive / foldable
 
-- `< 640 px` wide (outer screen, ordinary phones): single column, 16 px gutters, card
-  stack, markets tiles as full-width rows.
-- `>= 640 px` (inner screen open, tablets, desktop): two columns `1.15fr 1fr`, gap 24,
-  content max-width 1040 centered, 24 px gutters. Converter left, markets right stacked
-  vertically (each tile full width of column).
+Rule: no text is ever cut off. Layout decisions use the space a component actually
+gets (container queries, `container-type: inline-size`), not only the viewport.
+
+- `< 900 px` wide (phones, foldable outer screen, foldable inner screen ~680 px in
+  either orientation): single column, 16 px gutters (24 px from 640 px), card stack.
+- `>= 900 px` (tablets landscape, desktop): two columns `1.15fr 1fr`, gap 24, content
+  max-width 1040 centred, 24 px gutters. Converter left, markets right.
+- **Markets grid** (container `markets` on the section): one tile per row below 560 px
+  of section width; `repeat(2, minmax(0, 1fr))` from 560 px (so the foldable inner
+  screen shows a 2x2 grid). Status line spans the full width below.
+- **Tile layouts** (container `tile` on every tile, rates tile included):
+  - *Row* (tile >= 340 px): badge · texts · right-aligned numbers, as described above.
+  - *Stacked* (tile < 340 px): line 1 = 32 px badge + name (16/700, may wrap to two
+    lines, never ellipsis) + the change pill pushed to the right (BTC/metals); line 2 =
+    the quantity 22/800 tabular; then the captions, each on its own line, wrapping
+    allowed (unit price per bitcoin; per gram; per troy oz; `≈ 0,346 oz`). Rates tile
+    stacked: line 1 = badge + `1 EUR` with "Exchange rate" caption under it; then the
+    three lines full width as a 3-column grid (value right-aligned, code, change
+    right-aligned).
+  - In both layouts the texts column keeps a minimum of its longest word; numbers never
+    shrink below their content; if the row layout cannot honour that, it is the stacked
+    layout's job (choose the 340 px threshold accordingly and adjust it if a measured
+    case still truncates).
+- **Converter rows**: the amount input is 28/32 px; it grows to 32/36 px only when the
+  card is >= 480 px wide (container query on the card), not by viewport width. The
+  currency name (caption) may ellipsize only below 300 px of row width; at every layout
+  in this spec it must be fully visible.
+- Reference viewports that must show every text in full: 390x844, 474x696 (foldable
+  outer), 680x470 and 680x900 (foldable inner, landscape/portrait), 904x640, 1280x800,
+  each with amounts `1250` and `10000`.
 - Safe areas: `viewport-fit=cover`, padding with `env(safe-area-inset-*)`.
 - Foldable hinge: `@media (horizontal-viewport-segments: 2)` sets the two-column gap to
   span the fold using `env(viewport-segment-left 1 0) - env(viewport-segment-right 0 0)`.

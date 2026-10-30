@@ -132,3 +132,12 @@ exchange-arrows icon regenerated. Verify: lint/build/test pass, manual check at 
 Delete the settings button and sheet; English-only copy; all numbers in nl-NL notation with
 English dates; light/dark from the system only; settings v3 = { base, amount }. Verify:
 lint/build/test pass; browser check at 390 and 904 px in light and dark.
+
+## Task 12 — Adaptive layout, no truncation `[~]`  (tier: careful, deps: 11)
+
+Two columns only from 900 px; markets grid 1-up / 2-up by container width (560 px);
+row vs stacked tile layout by tile width (340 px) for asset and rates tiles; converter
+input size by card width (480 px). SPEC §8 "Responsive / foldable". Verify: lint/build/test
+pass; every reference viewport (390x844, 474x696, 680x470, 680x900, 904x640, 1280x800) with
+amounts 1250 and 10000 shows no truncated text (scripted check: no element with
+`scrollWidth > clientWidth` inside tiles/rows) and no horizontal page overflow.
