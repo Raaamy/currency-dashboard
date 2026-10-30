@@ -167,7 +167,7 @@ SPEC §11 "Rates tile (chip grid)" and the 2-up asset arrangement. Files:
 formatting, change colours), no-truncation script at the six reference viewports with 2
 and 8 currencies, lint/build/test pass.
 
-## Task 16 — Formatted amount input and reordering `[~]`  (tier: careful, deps: 15)
+## Task 16 — Formatted amount input and reordering `[x]`  (tier: careful, deps: 15)
 
 SPEC §12: `src/lib/amountInput.ts` (`formatAmountInput`, pure, fully tested), live
 formatting with caret preservation in the active row, re-format on base change; edit-mode

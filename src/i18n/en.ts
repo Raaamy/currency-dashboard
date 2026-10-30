@@ -31,6 +31,12 @@ export const en = {
   allCurrencies: 'All currencies',
   noResults: 'No currencies found',
   close: 'Close',
+  // SPEC §12 "Copy (en) additions" (reordering in edit mode, screen-reader announcements)
+  reorder: 'Reorder {code}',
+  'dnd.picked': 'Picked up {code}.',
+  'dnd.moved': '{code} moved to position {pos} of {total}.',
+  'dnd.dropped': '{code} dropped at position {pos} of {total}.',
+  'dnd.cancelled': 'Reordering cancelled. {code} returned to position {pos}.',
 };
 
 export type MessageKey = keyof typeof en;

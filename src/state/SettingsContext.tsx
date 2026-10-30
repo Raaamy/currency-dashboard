@@ -8,7 +8,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { DEFAULT_CURRENCIES, LEGACY_CURRENCIES } from '@/lib/currencies';
+import { formatAmountInput } from '@/lib/amountInput';
+import { DEFAULT_CURRENCIES, getCurrency, LEGACY_CURRENCIES } from '@/lib/currencies';
 import { readJSON, writeJSON } from '@/lib/storage';
 
 /** SPEC §11 "Settings": the chosen currencies (insertion order), the base and the typed amount. */
@@ -26,6 +27,8 @@ export interface SettingsApi extends Settings {
   addCurrency: (code: string) => void;
   /** Ignored when it would leave fewer than 2; removing the base makes the first one the base. */
   removeCurrency: (code: string) => void;
+  /** Moves `from` to the index of `to` (SPEC §12); ignored unless both are chosen. Base unchanged. */
+  moveCurrency: (from: string, to: string) => void;
 }
 
 const STORAGE_KEY = 'settings';
@@ -122,12 +125,24 @@ export function SettingsProvider({ children, initialSettings }: SettingsProvider
     });
   }, [settings]);
 
-  /** Applies `change` and normalises; keeps the old object when nothing changed. */
+  /**
+   * Applies `change` and normalises; keeps the old object when nothing changed. When the base
+   * changes (setBase, or removing the base) the amount is re-formatted with the new
+   * currency's decimals (SPEC §12), extra decimals dropped.
+   */
   const update = useCallback((change: (s: Settings) => Partial<Settings> | null) => {
     setSettings((s) => {
       const patch = change(s);
       if (!patch) return s;
       const next = normalise({ ...s, ...patch });
+      if (next.base !== s.base) {
+        const { amount } = next;
+        next.amount = formatAmountInput(
+          amount,
+          amount.length,
+          getCurrency(next.base).decimals,
+        ).text;
+      }
       return sameSettings(s, next) ? s : next;
     });
   }, []);
@@ -159,9 +174,22 @@ export function SettingsProvider({ children, initialSettings }: SettingsProvider
     [update],
   );
 
+  const moveCurrency = useCallback(
+    (from: string, to: string) =>
+      update((s) => {
+        const a = s.currencies.indexOf(toCode(from) ?? '');
+        const b = s.currencies.indexOf(toCode(to) ?? '');
+        if (a < 0 || b < 0 || a === b) return null;
+        const currencies = [...s.currencies];
+        currencies.splice(b, 0, ...currencies.splice(a, 1));
+        return { currencies };
+      }),
+    [update],
+  );
+
   const value = useMemo<SettingsApi>(
-    () => ({ ...settings, setBase, setAmount, addCurrency, removeCurrency }),
-    [settings, setBase, setAmount, addCurrency, removeCurrency],
+    () => ({ ...settings, setBase, setAmount, addCurrency, removeCurrency, moveCurrency }),
+    [settings, setBase, setAmount, addCurrency, removeCurrency, moveCurrency],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

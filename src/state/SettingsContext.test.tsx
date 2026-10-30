@@ -202,6 +202,60 @@ describe('SettingsProvider invariants', () => {
     act(() => api.setBase('usd'));
     expect(api.base).toBe('USD');
   });
+
+  it('moveCurrency moves a code to the index of another and keeps the base', () => {
+    renderProvider();
+    act(() => {
+      api.addCurrency('GBP');
+      api.addCurrency('AED');
+    });
+    act(() => api.moveCurrency('USD', 'GBP'));
+    expect(api).toMatchObject({ currencies: ['EUR', 'GBP', 'USD', 'AED'], base: 'EUR' });
+    act(() => api.moveCurrency('aed', 'eur'));
+    expect(api.currencies).toEqual(['AED', 'EUR', 'GBP', 'USD']);
+    expect(api.base).toBe('EUR');
+    expect(stored().currencies).toEqual(['AED', 'EUR', 'GBP', 'USD']);
+    act(() => api.moveCurrency('EUR', 'USD'));
+    expect(api.currencies).toEqual(['AED', 'GBP', 'USD', 'EUR']);
+  });
+
+  it('moveCurrency ignores unknown codes and a move onto itself', () => {
+    renderProvider();
+    act(() => api.addCurrency('GBP'));
+    const before = api.currencies;
+    act(() => api.moveCurrency('USD', 'JPY'));
+    act(() => api.moveCurrency('JPY', 'USD'));
+    act(() => api.moveCurrency('USD', 'USD'));
+    expect(api.currencies).toBe(before);
+  });
+
+  it('re-formats the amount with the new base currency decimals', () => {
+    render(
+      <SettingsProvider initialSettings={{ currencies: ['EUR', 'JPY', 'KWD'], amount: '12,50' }}>
+        <Probe />
+      </SettingsProvider>,
+    );
+    act(() => api.setBase('KWD'));
+    expect(api.amount).toBe('12,50');
+    act(() => api.setBase('JPY'));
+    expect(api.amount).toBe('12');
+    act(() => api.setAmount('1234'));
+    act(() => api.setBase('EUR'));
+    expect(api.amount).toBe('1.234');
+  });
+
+  it('re-formats the amount when removing the base moves it', () => {
+    render(
+      <SettingsProvider
+        initialSettings={{ currencies: ['EUR', 'JPY', 'USD'], base: 'EUR', amount: '9,99' }}
+      >
+        <Probe />
+      </SettingsProvider>,
+    );
+    act(() => api.moveCurrency('JPY', 'EUR'));
+    act(() => api.removeCurrency('EUR'));
+    expect(api).toMatchObject({ currencies: ['JPY', 'USD'], base: 'JPY', amount: '9' });
+  });
 });
 
 describe('normalise', () => {

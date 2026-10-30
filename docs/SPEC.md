@@ -447,10 +447,13 @@ no `window.location` routing.
   `formatAmountInput(raw: string, caret: number, decimals: number, lastKey?: string)
   -> { text: string; caret: number }`. Rules:
   - Keep digits and at most one decimal separator; drop everything else.
-  - Which character is the decimal separator: a `,` anywhere, or a `.` that the user
-    just typed at the end (or that has 1-2 digits after it and is the only separator
-    when pasting, e.g. `12.5`, `0.75`). A `.` followed by exactly three digits, or
-    several `.`, are thousands separators (`1.234` = 1234, matching `parseAmount`).
+  - Which character is the decimal separator (as implemented, must agree with
+    `parseAmount` for every pasted value): both `,` and `.` present -> the last one is
+    the decimal (`1,234.56` -> `1.234,56`); only `,` -> the `,` is the decimal (Dutch
+    keypad, also `1,234` = 1,234); only `.`: a `.` typed at the end is the decimal, a
+    lone pasted `.` before 1-2 digits is the decimal (`12.5`), before exactly three
+    digits it groups only after 1-3 non-zero digits (`1.234` = 1234, `0.123` = 0,123),
+    several `.` group. A separator typed while one exists is ignored.
   - Integer part: strip leading zeros (keep a single `0` before a decimal or alone),
     group per three with `.`.
   - Fraction: at most `decimals` digits (extra digits are dropped); when `decimals` is 0

@@ -7,7 +7,7 @@ One line per entry: `path — what / when to touch`.
 - `docs/PLAN.md` — ordered tasks with status; update when a task is accepted
 - `docs/IOS.md` — (task 5) steps to wrap the build in Capacitor for iOS
 - `filemap.md` — this index
-- `package.json` — deps and scripts (dev, build, preview, lint, format, test, test:watch); touch when adding deps/scripts
+- `package.json` — deps (incl. `@dnd-kit/core|sortable|utilities|modifiers`; dev: `@testing-library/user-event`) and scripts (dev, build, preview, lint, format, test, test:watch); touch when adding deps/scripts
 - `vite.config.ts` — Vite (`base: './'`, `@/` alias) + Vitest config (jsdom, globals, setup file) + VitePWA (autoUpdate, manifest, precache, NetworkFirst `wissel-api` cache for the API hosts)
 - `pwa-assets.config.ts` — `@vite-pwa/assets-generator` config (minimal2023 preset, apricot maskable/apple bg); run `npm run icons`
 - `public/` — `icon.svg` (source icon: white exchange arrows on an apricot rounded square) + generated favicon.ico, apple-touch-icon-180x180, pwa-64/192/512, maskable-icon-512 PNGs
@@ -24,8 +24,9 @@ One line per entry: `path — what / when to touch`.
 - `src/lib/currencies.ts` — currency registry (SPEC §11): `CurrencyCode` (= string), `CurrencyTint`, `Currency`, memoised `getCurrency(code)` (Intl name/symbol/decimals, overrides for EUR/USD/GBP/AED), `tintFor`, `compareByName`, `POPULAR`, `DEFAULT_CURRENCIES`, `LEGACY_CURRENCIES`
 - `src/lib/currencies.test.ts` — registry tests: names, symbols, decimals (JPY/KWD), unknown-code fallback, tints, lists, sorting
 - `src/lib/money.ts` — `NUMBER_LOCALE` (nl-NL) / `DATE_LOCALE` (en-GB), `DASH`, convert (NaN for a missing rate), parseAmount, roundTo, formatMoney (any ISO code, currency decimals, `—` for NaN)/Number/Rate/Quantity/Timestamp/Percent, ozToGram/gramToOz, quantityFor, rateChangePct (+ `money.test.ts`)
+- `src/lib/amountInput.ts` — `formatAmountInput(raw, caret, decimals, lastKey?)` (SPEC §12): live nl-NL formatting of the typed amount (grouping, one decimal separator, currency decimals, leading zeros, caret mapping, Backspace/Delete on a group dot) (+ `amountInput.test.ts`)
 - `src/lib/storage.ts` — readJSON/writeJSON/removeKey on localStorage under `wissel.*`, errors swallowed (+ `storage.test.ts`)
-- `src/i18n/en.ts` — SPEC §8 + §11 copy (English only); `MessageKey` = keys of `en`; the `cur.*` keys are no longer used (names come from the registry)
+- `src/i18n/en.ts` — SPEC §8 + §11 + §12 copy (incl. `reorder` and the `dnd.*` announcements) (English only); `MessageKey` = keys of `en`; the `cur.*` keys are no longer used (names come from the registry)
 - `src/i18n/index.ts` — `t(key, params)` and `useT()` (returns `t`) (+ `index.test.tsx`)
 - `src/data/http.ts` — the only `fetch` caller: `fetchJson` with 8 s AbortController timeout, `FetchError`, shape guards
 - `src/data/rates.ts` — open.er-api fetch (keeps every code, needs EUR + USD), `wissel.rates` cache, `isFresh` (6 h), cache-aware `getRates`, `availableCodes` (+ `rates.test.ts`)
@@ -33,15 +34,15 @@ One line per entry: `path — what / when to touch`.
 - `src/data/history.ts` — daily EUR snapshots (currency-api: jsDelivr -> pages.dev), latest + previous day (-1..-3), every 3-letter lower-case key, `wissel.history` cache, cache-aware `getHistory` (+ `history.test.ts`)
 - `src/data/usePolling.ts` — interval hook: runs on mount, pauses while hidden, runs again on visible (+ `usePolling.test.ts`)
 - `src/data/index.ts` — re-exports `useRates`, `useMarkets`, `useHistory`, `useRefreshAll`, `availableCodes` and the data types for components
-- `src/state/SettingsContext.tsx` — currencies/base/amount persisted to `wissel.settings` with `version: 4` (< 4 migrates to the legacy four, keeping base/amount); `normalise` enforces the invariants; `addCurrency`/`removeCurrency`/`setBase`/`setAmount` (+ test)
+- `src/state/SettingsContext.tsx` — currencies/base/amount persisted to `wissel.settings` with `version: 4` (< 4 migrates to the legacy four, keeping base/amount); `normalise` enforces the invariants; `addCurrency`/`removeCurrency`/`moveCurrency`/`setBase`/`setAmount`; a base change re-formats the amount with the new currency's decimals (+ test)
 - `src/state/DataContext.tsx` — single owner of fetching and polling; `useRates`, `useMarkets`, `useHistory`, `useRefreshAll` (+ test)
 - `src/state/AppProviders.tsx` — Settings + Data providers; tests pass `initialSettings` (normalised, storage not read) and `initialData` (no fetch, no polling)
 - `src/test/mockFetch.ts` — `mockFetch(routes)` URL-substring fetch mock and a sample open.er-api body, for tests
 - `src/test/setup.ts` — Vitest setup (jest-dom matchers, clears localStorage after each test)
 - `src/components/Header/` — Header (no title, no props): caption row with refresh button + "updated" caption (+ `Header.test.tsx`)
 - `src/components/Converter/` — the converter card and its rows
-- `src/components/Converter/ConverterCard.tsx` — converter card: header (micro label + Edit/Done `aria-pressed`), one CurrencyRow per chosen currency (`—` for codes missing from the rates), conversion, focus-on-row-tap, edit mode (remove buttons above `MIN_CURRENCIES`, focus moves to the next remove button or Done), "Add currency" row that opens the CurrencyPicker it renders; the card is the `converter` size container (+ `ConverterCard.test.tsx`)
-- `src/components/Converter/CurrencyRow.tsx` — one row: active = label + amount input (32 px when the card is >= 480 px, container query), inactive = whole-row button; edit mode = remove button (22 px circle, 44 px hit area) + badge + code/name, no amount; empty-state shimmer
+- `src/components/Converter/ConverterCard.tsx` — converter card: header (micro label + Edit/Done `aria-pressed`), one CurrencyRow per chosen currency (`—` for codes missing from the rates), conversion, focus-on-row-tap, edit mode (remove buttons above `MIN_CURRENCIES`, focus moves to the next remove button or Done; dnd-kit reordering by the row handles, pointer + keyboard, announcements, saved via `moveCurrency`), "Add currency" row (not sortable) that opens the CurrencyPicker it renders; the card is the `converter` size container (+ `ConverterCard.test.tsx`)
+- `src/components/Converter/CurrencyRow.tsx` — one row: active = label + amount input (32 px when the card is >= 480 px, container query), inactive = whole-row button; the input formats live with `formatAmountInput` and restores the caret in a layout effect; edit mode = remove button (22 px circle, 44 px hit area) + badge + code/name + drag handle (six-dot grip, 44 px, `touch-action: none`), no amount, lifted while dragging (`useSortable`); empty-state shimmer
 - `src/components/Picker/CurrencyPicker.tsx` — currency picker (SPEC §11): modal `<dialog>` (bottom sheet < 640 px, centred 440 px dialog from 640 px), title + close + search fixed, list scrolls; Popular / All currencies sections or one filtered list; items toggle add/remove (`aria-pressed`, `aria-disabled` at the minimum); closes on Escape, backdrop, close button and the native `close` event (+ `CurrencyPicker.test.tsx`)
 - `src/components/Picker/search.ts` — `foldText` / `matchesQuery`: case- and accent-insensitive code/name match for the picker (+ `search.test.ts`)
 - `src/components/Picker/testDialog.ts` — test-only `installDialogPolyfill()` (jsdom lacks `showModal`/`close`)

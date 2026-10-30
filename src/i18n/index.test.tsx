@@ -9,6 +9,8 @@ describe('t()', () => {
     expect(t('cur.USD')).toBe('US dollar');
     expect(t('addCurrency')).toBe('Add currency');
     expect(t('removeCurrency', { code: 'GBP' })).toBe('Remove GBP');
+    expect(t('reorder', { code: 'USD' })).toBe('Reorder USD');
+    expect(t('dnd.moved', { code: 'USD', pos: 2, total: 4 })).toBe('USD moved to position 2 of 4.');
   });
 
   it('replaces placeholders', () => {
@@ -25,8 +27,17 @@ describe('t()', () => {
     expect(t('no.such.key' as MessageKey)).toBe('no.such.key');
   });
 
-  it('has exactly the SPEC §8 and §11 keys', () => {
-    expect(Object.keys(en)).toHaveLength(30);
+  it('has exactly the SPEC §8, §11 and §12 keys', () => {
+    expect(Object.keys(en)).toHaveLength(35);
+    expect(Object.keys(en)).toEqual(
+      expect.arrayContaining([
+        'reorder',
+        'dnd.picked',
+        'dnd.moved',
+        'dnd.dropped',
+        'dnd.cancelled',
+      ]),
+    );
     for (const key of [
       'edit',
       'done',
