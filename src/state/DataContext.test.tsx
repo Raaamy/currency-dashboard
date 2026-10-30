@@ -49,7 +49,18 @@ const isHistoryUrl = (url: string) => url.includes('currency-api');
 
 const cached = (ageMs: number): Rates => ({
   base: 'EUR',
-  rates: { EUR: 1, USD: 1.1, GBP: 0.9, AED: 4 },
+  rates: {
+    EUR: 1,
+    USD: 1.1,
+    GBP: 0.9,
+    AED: 4,
+    CHF: 0.93,
+    JPY: 170,
+    CAD: 1.5,
+    AUD: 1.7,
+    SEK: 11.5,
+    NOK: 11.8,
+  },
   fetchedAt: Date.now() - ageMs,
   publishedAt: Date.now() - ageMs,
 });

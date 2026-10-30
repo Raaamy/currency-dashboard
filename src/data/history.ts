@@ -28,7 +28,8 @@ export type SnapshotHost = 'cdn' | 'pages';
 
 const STORAGE_KEY = 'history';
 const HOSTS: readonly SnapshotHost[] = ['cdn', 'pages'];
-const SNAPSHOT_CODES = ['usd', 'gbp', 'aed', 'xau', 'xag', 'btc'] as const;
+/** Every lower-case 3-letter key: all fiat codes plus xau, xag and btc. */
+const SNAPSHOT_KEY_RE = /^[a-z]{3}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -46,9 +47,10 @@ function parseSnapshot(body: unknown, url: string): DailySnapshot {
   const source = body.eur;
   if (!isRecord(source)) throw new FetchError('shape', url, 'Unexpected snapshot response');
   const rates: SnapshotRates = { eur: 1 };
-  for (const code of SNAPSHOT_CODES) {
-    const value = source[code];
-    if (isPositiveNumber(value)) rates[code] = value;
+  for (const [code, value] of Object.entries(source)) {
+    if (code !== 'eur' && SNAPSHOT_KEY_RE.test(code) && isPositiveNumber(value)) {
+      rates[code] = value;
+    }
   }
   return { date: body.date, rates };
 }

@@ -1,7 +1,7 @@
 /* One currency row (SPEC §8 "Converter card"). Tokens only. */
 .row {
   position: relative;
-  height: 64px;
+  min-height: 64px;
   overflow: hidden;
   border: 1px solid transparent;
   border-radius: var(--radius-row);
@@ -23,13 +23,13 @@
 
 .content {
   display: grid;
-  /* The texts column never gets narrower than the currency code (the name ellipsises). */
+  /* The texts column never gets narrower than the currency code; a long name wraps. */
   grid-template-columns: 40px minmax(min-content, 1fr) auto;
   column-gap: 12px;
   align-items: center;
   width: 100%;
-  height: 100%;
-  padding: 0 12px;
+  min-height: 62px;
+  padding: 8px 12px;
 }
 
 label.content {
@@ -78,11 +78,10 @@ label.content {
   /* Contributes no intrinsic width (so the code alone sets the column minimum) but fills it. */
   width: 0;
   min-width: 100%;
-  overflow: hidden;
   color: var(--text-2);
   font: var(--font-caption);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Long Intl names ("Bosnia-Herzegovina Convertible Mark") wrap instead of being cut. */
+  overflow-wrap: anywhere;
 }
 
 .amount {

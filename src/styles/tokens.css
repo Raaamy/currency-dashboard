@@ -26,6 +26,13 @@
   --tint-btc: #fde7d3;
   --tint-gold: linear-gradient(135deg, #f7e3a1, #e9c25a);
   --tint-silver: linear-gradient(135deg, #eef0f3, #c9cfd8);
+  /* Generic currency tints (SPEC §11): every code but EUR/USD/GBP/AED, by a stable hash */
+  --tint-1: #e3f0f4;
+  --tint-2: #f4ebdd;
+  --tint-3: #e9e6f7;
+  --tint-4: #e6f2e4;
+  --tint-5: #f7e4e8;
+  --tint-6: #edebe7;
 
   /* Shape */
   --radius-card: 24px;
@@ -72,6 +79,12 @@
     --tint-btc: #45301c;
     --tint-gold: linear-gradient(135deg, #d8b24e, #9a7a2c);
     --tint-silver: linear-gradient(135deg, #c3c9d2, #7e8792);
+    --tint-1: #20343b;
+    --tint-2: #3a3125;
+    --tint-3: #2c2940;
+    --tint-4: #233325;
+    --tint-5: #3d262c;
+    --tint-6: #312e2a;
 
     --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.35);
   }

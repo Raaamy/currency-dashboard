@@ -1,5 +1,5 @@
 /** Pure conversion math and number parsing/formatting (SPEC §5, §7.2, §8). No React, no DOM. */
-import type { CurrencyCode } from './currencies';
+import { getCurrency, type CurrencyCode } from './currencies';
 
 /** Every number in the UI uses Dutch notation (`1.234,56`); the copy stays English. */
 export const NUMBER_LOCALE = 'nl-NL';
@@ -8,16 +8,23 @@ export const DATE_LOCALE = 'en-GB';
 
 export const OZ_IN_GRAMS = 31.1034768;
 
-/** Units of each currency per 1 EUR (EUR = 1). */
-export type RateTable = Record<CurrencyCode, number>;
+/** Units of each currency per 1 EUR (EUR = 1), keyed by upper-case ISO code. */
+export type RateTable = Record<string, number>;
 
+/** Shown wherever a number is missing (no rates, or a code the rates table lacks). */
+export const DASH = '—';
+
+/** `NaN` when either rate is missing or not positive (callers render `—`). */
 export function convert(
   amount: number,
   from: CurrencyCode,
   to: CurrencyCode,
   rates: RateTable,
 ): number {
-  return (amount / rates[from]) * rates[to];
+  const fromRate = rates[from];
+  const toRate = rates[to];
+  if (!(fromRate > 0) || !(toRate > 0)) return NaN;
+  return (amount / fromRate) * toRate;
 }
 
 /**
@@ -73,20 +80,45 @@ export function roundTo(value: number, decimals: number): number {
 
 const noNegativeZero = (value: number): number => (value === 0 ? 0 : value);
 
+/**
+ * Amount in any ISO currency; `decimals` defaults to the currency's minor units (JPY 0,
+ * KWD 3). Non-finite values (a missing rate) format as `—`.
+ */
 export function formatMoney(
   value: number,
   code: CurrencyCode,
   opts: { decimals?: number; symbol?: boolean } = {},
 ): string {
-  const decimals = opts.decimals ?? 2;
-  const symbol = opts.symbol ?? true;
-  return new Intl.NumberFormat(NUMBER_LOCALE, {
-    ...(symbol
-      ? { style: 'currency', currency: code, currencyDisplay: 'narrowSymbol' }
-      : { style: 'decimal' }),
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(noNegativeZero(value));
+  if (!Number.isFinite(value)) return DASH;
+  const decimals = opts.decimals ?? getCurrency(code).decimals;
+  const digits = { minimumFractionDigits: decimals, maximumFractionDigits: decimals };
+  const plain = () =>
+    new Intl.NumberFormat(NUMBER_LOCALE, { style: 'decimal', ...digits }).format(
+      noNegativeZero(value),
+    );
+  if (!(opts.symbol ?? true)) return plain();
+  try {
+    return new Intl.NumberFormat(NUMBER_LOCALE, {
+      style: 'currency',
+      currency: code,
+      currencyDisplay: 'narrowSymbol',
+      ...digits,
+    }).format(noNegativeZero(value));
+  } catch {
+    // Not a well-formed ISO code: show the code before the number instead of throwing.
+    return `${code}\u00a0${plain()}`;
+  }
+}
+
+/**
+ * Exchange rate (SPEC §11 "Rates tile"): 4 decimals below 10, 3 below 100, 2 from 100
+ * (`1,1162`, `38,215`, `169,42`). Non-finite values format as `—`.
+ */
+export function formatRate(value: number): string {
+  if (!Number.isFinite(value)) return DASH;
+  const abs = Math.abs(value);
+  const decimals = abs < 10 ? 4 : abs < 100 ? 3 : 2;
+  return formatNumber(value, { minDecimals: decimals, maxDecimals: decimals });
 }
 
 /** Dutch-notation number; defaults to 0..2 decimals (`maxDecimals` never below `minDecimals`). */

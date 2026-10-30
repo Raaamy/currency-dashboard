@@ -1,5 +1,4 @@
 /** Fiat rates from open.er-api (EUR base) with a localStorage cache (SPEC §6). */
-import type { CurrencyCode } from '@/lib/currencies';
 import type { RateTable } from '@/lib/money';
 import { readJSON, writeJSON } from '@/lib/storage';
 import {
@@ -23,17 +22,23 @@ export interface Rates {
 export const RATES_URL = 'https://open.er-api.com/v6/latest/EUR';
 export const RATES_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 const STORAGE_KEY = 'rates';
-const CODES: readonly CurrencyCode[] = ['EUR', 'USD', 'GBP', 'AED'];
+const CODE_RE = /^[A-Z]{3}$/;
 
+/**
+ * Every 3-letter code with a positive number (SPEC §11 "Model"), EUR forced to 1. `null`
+ * without USD, which the markets need (asset prices are in USD).
+ */
 function pickRates(source: Record<string, unknown>): RateTable | null {
-  const table: RateTable = { EUR: 1, USD: 0, GBP: 0, AED: 0 };
-  for (const code of CODES) {
-    if (code === 'EUR') continue;
-    const value = source[code];
-    if (!isPositiveNumber(value)) return null;
-    table[code] = value;
+  const table: RateTable = { EUR: 1 };
+  for (const [code, value] of Object.entries(source)) {
+    if (code !== 'EUR' && CODE_RE.test(code) && isPositiveNumber(value)) table[code] = value;
   }
-  return table;
+  return isPositiveNumber(table.USD) ? table : null;
+}
+
+/** The codes in the rates table (EUR included), alphabetical. */
+export function availableCodes(r: Rates): string[] {
+  return Object.keys(r.rates).sort();
 }
 
 export async function fetchRates(fetchImpl?: FetchLike): Promise<Rates> {
@@ -52,8 +57,13 @@ export async function fetchRates(fetchImpl?: FetchLike): Promise<Rates> {
 function isRates(value: unknown): value is Rates {
   if (!isRecord(value) || value.base !== 'EUR' || !isRecord(value.rates)) return false;
   if (typeof value.fetchedAt !== 'number' || typeof value.publishedAt !== 'number') return false;
+  // Any number of codes; at least EUR (= 1) and USD.
   const rates = value.rates;
-  return rates.EUR === 1 && CODES.every((code) => isPositiveNumber(rates[code]));
+  return (
+    rates.EUR === 1 &&
+    isPositiveNumber(rates.USD) &&
+    Object.entries(rates).every(([code, rate]) => CODE_RE.test(code) && isPositiveNumber(rate))
+  );
 }
 
 export function loadCachedRates(): Rates | null {
@@ -65,8 +75,11 @@ export function saveRates(r: Rates): void {
   writeJSON(STORAGE_KEY, r);
 }
 
+/** Caches written before user-chosen currencies held only 4 codes: refetch those at once. */
+export const MIN_FRESH_CODES = 10;
+
 export function isFresh(r: Rates, now: number = Date.now()): boolean {
-  return now - r.fetchedAt < RATES_MAX_AGE_MS;
+  return Object.keys(r.rates).length >= MIN_FRESH_CODES && now - r.fetchedAt < RATES_MAX_AGE_MS;
 }
 
 export interface RatesResult {

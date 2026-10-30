@@ -1,6 +1,6 @@
 import { useHistory, useRates } from '@/data';
 import { useT } from '@/i18n';
-import { CURRENCIES } from '@/lib/currencies';
+import { getCurrency } from '@/lib/currencies';
 import { convert, formatNumber, formatPercent, rateChangePct, roundTo } from '@/lib/money';
 import { useSettings } from '@/state/SettingsContext';
 import { SymbolBadge } from '@/components/ui/SymbolBadge';
@@ -15,14 +15,17 @@ const direction = (pct: number): 'up' | 'down' | 'flat' => {
   return shown > 0 ? 'up' : shown < 0 ? 'down' : 'flat';
 };
 
-/** Fourth markets tile (SPEC §8 "Rates tile"): 1 unit of the base currency in the other three. */
+/**
+ * First markets tile (SPEC §8 "Rates tile"): 1 unit of the base currency in each other chosen
+ * currency (settings order); codes missing from the rates table show `—`.
+ */
 export function RatesTile() {
   const t = useT();
-  const { base } = useSettings();
+  const { currencies, base } = useSettings();
   const { data: rates } = useRates();
   const { data: history } = useHistory();
-  const baseCurrency = CURRENCIES.find((c) => c.code === base) ?? CURRENCIES[0];
-  const others = CURRENCIES.filter((c) => c.code !== base);
+  const baseCurrency = getCurrency(base);
+  const others = currencies.filter((code) => code !== base);
   const ready = rates !== null;
   const tileClass = [tileStyles.tile, tileStyles.rates, ready ? '' : tileStyles.loading]
     .filter(Boolean)
@@ -43,7 +46,8 @@ export function RatesTile() {
           <p className={styles.caption}>{t('exchangeRate')}</p>
         </div>
         <div className={styles.lines}>
-          {others.map(({ code }) => {
+          {others.map((code) => {
+            const value = ready ? convert(1, base, code, rates.rates) : NaN;
             const pct = history
               ? rateChangePct(history.today.rates, history.previous.rates, base, code)
               : null;
@@ -52,10 +56,9 @@ export function RatesTile() {
                 {ready ? (
                   <>
                     <span className={styles.value}>
-                      {formatNumber(convert(1, base, code, rates.rates), {
-                        minDecimals: 4,
-                        maxDecimals: 4,
-                      })}
+                      {Number.isFinite(value)
+                        ? formatNumber(value, { minDecimals: 4, maxDecimals: 4 })
+                        : DASH}
                     </span>{' '}
                     <span className={styles.code}>{code}</span>
                     {pct !== null && (

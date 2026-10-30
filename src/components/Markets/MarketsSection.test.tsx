@@ -1,5 +1,6 @@
 import { act, render, screen, within } from '@testing-library/react';
 import type { History } from '@/data';
+import { LEGACY_CURRENCIES } from '@/lib/currencies';
 import type { InitialData } from '@/state/DataContext';
 import { AppProviders } from '@/state/AppProviders';
 import type { Settings } from '@/state/SettingsContext';
@@ -28,7 +29,12 @@ const fixture = (overrides: Partial<InitialData> = {}): InitialData => ({
 function renderSection(settings: Partial<Settings> = {}, data: Partial<InitialData> = {}) {
   return render(
     <AppProviders
-      initialSettings={{ base: 'EUR', amount: '1250', ...settings }}
+      initialSettings={{
+        currencies: [...LEGACY_CURRENCIES],
+        base: 'EUR',
+        amount: '1250',
+        ...settings,
+      }}
       initialData={fixture(data)}
     >
       <MarketsSection />
@@ -142,6 +148,22 @@ describe('MarketsSection', () => {
       .map(text)
       .filter((l) => l !== t('exchangeRate'));
     expect(lines).toEqual(['1,1000 USD', '0,8500 GBP', '4,0000 AED']);
+  });
+
+  it('shows one line per chosen non-base currency, in settings order, with a dash when missing', () => {
+    const { container } = renderSection({ currencies: ['EUR', 'CHF', 'USD'] });
+    const lines = Array.from(tile(container, 'RATES').querySelectorAll('p'))
+      .map(text)
+      .filter((l) => l !== t('exchangeRate'));
+    expect(lines).toEqual(['— CHF', '1,1000 USD']);
+  });
+
+  it('shows a single line with the default two currencies', () => {
+    const { container } = renderSection({ currencies: ['EUR', 'USD'] });
+    const lines = Array.from(tile(container, 'RATES').querySelectorAll('p'))
+      .map(text)
+      .filter((l) => l !== t('exchangeRate'));
+    expect(lines).toEqual(['1,1000 USD']);
   });
 
   it('follows the base currency on the rates tile', () => {

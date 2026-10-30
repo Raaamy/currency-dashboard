@@ -2,14 +2,14 @@ import { useEffect, useId, useLayoutEffect, useRef, type MouseEvent } from 'reac
 import { Card } from '@/components/ui/Card';
 import { useRates } from '@/data';
 import { useT } from '@/i18n';
-import { CURRENCIES, type Currency, type CurrencyCode } from '@/lib/currencies';
+import { getCurrency, type Currency, type CurrencyCode } from '@/lib/currencies';
 import { convert, formatMoney, parseAmount } from '@/lib/money';
 import { useSettings } from '@/state/SettingsContext';
 import styles from './ConverterCard.module.css';
 import { CurrencyRow } from './CurrencyRow';
 
 /**
- * Converter card (SPEC §7.2-7.3, §8): four currency rows; the active (base) row owns the
+ * Converter card (SPEC §7.2-7.3, §8, §11): one row per chosen currency, in settings order; the active (base) row owns the
  * input, the others show the converted amount and become the base when tapped.
  *
  * Focus on row tap: `pointerdown` on a row button fires before focus leaves the input, so it
@@ -19,7 +19,7 @@ import { CurrencyRow } from './CurrencyRow';
  * A plain tap with the keyboard closed never focuses, so the mobile keyboard does not pop up.
  */
 export function ConverterCard() {
-  const { base, amount, setBase, setAmount } = useSettings();
+  const { currencies, base, amount, setBase, setAmount } = useSettings();
   const { data } = useRates();
   const t = useT();
   const titleId = useId();
@@ -62,9 +62,10 @@ export function ConverterCard() {
   const display = (currency: Currency): { text: string; muted: boolean } => {
     if (!rates) return { text: '—', muted: true };
     const opts = { symbol: false, decimals: currency.decimals };
-    if (parsed === null) return { text: formatMoney(0, currency.code, opts), muted: true };
-    const value = convert(parsed, base, currency.code, rates);
-    return { text: formatMoney(value, currency.code, opts), muted: false };
+    // NaN when the base or this code is missing from the rates table: formats as `—`.
+    const value = convert(parsed ?? 0, base, currency.code, rates);
+    if (!Number.isFinite(value)) return { text: '—', muted: true };
+    return { text: formatMoney(value, currency.code, opts), muted: parsed === null };
   };
 
   return (
@@ -73,26 +74,28 @@ export function ConverterCard() {
         {t('convert')}
       </h2>
       <ul className={styles.list}>
-        {CURRENCIES.map((currency) => {
-          const active = currency.code === base;
-          const { text, muted } = active ? { text: '', muted: false } : display(currency);
-          return (
-            <CurrencyRow
-              key={currency.code}
-              currency={currency}
-              name={t(`cur.${currency.code}`)}
-              active={active}
-              loading={rates === null}
-              amountText={text}
-              muted={muted}
-              value={amount}
-              onValueChange={setAmount}
-              inputRef={inputRef}
-              onPress={handlePress}
-              onSelect={(event) => handleSelect(currency.code, event)}
-            />
-          );
-        })}
+        {currencies
+          .map((code) => getCurrency(code))
+          .map((currency) => {
+            const active = currency.code === base;
+            const { text, muted } = active ? { text: '', muted: false } : display(currency);
+            return (
+              <CurrencyRow
+                key={currency.code}
+                currency={currency}
+                name={currency.name}
+                active={active}
+                loading={rates === null}
+                amountText={text}
+                muted={muted}
+                value={amount}
+                onValueChange={setAmount}
+                inputRef={inputRef}
+                onPress={handlePress}
+                onSelect={(event) => handleSelect(currency.code, event)}
+              />
+            );
+          })}
       </ul>
     </Card>
   );

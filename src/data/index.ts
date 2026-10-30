@@ -6,5 +6,5 @@ export {
   type SourceStatus,
 } from '@/state/DataContext';
 export type { DailySnapshot, History } from './history';
-export type { Rates } from './rates';
+export { availableCodes, type Rates } from './rates';
 export type { AssetId, MarketQuote, Quotes } from './markets';

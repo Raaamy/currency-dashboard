@@ -16,7 +16,20 @@ const NOW = Date.UTC(2026, 9, 30, 12, 0, 0);
 
 const body = (date: string, usd = 1.112) => ({
   date,
-  eur: { usd, gbp: 0.8365, aed: 4.0845, xau: 0.00027556, xag: 0.02064, btc: 1.376e-5, jpy: 170 },
+  eur: {
+    eur: 1,
+    usd,
+    gbp: 0.8365,
+    aed: 4.0845,
+    xau: 0.00027556,
+    xag: 0.02064,
+    btc: 1.376e-5,
+    jpy: 170,
+    chf: 0.93,
+    '1inch': 4.2,
+    usdt: 1.1,
+    bad: 0,
+  },
 });
 
 const rates = (usd: number) => ({
@@ -27,6 +40,8 @@ const rates = (usd: number) => ({
   xau: 0.00027556,
   xag: 0.02064,
   btc: 1.376e-5,
+  jpy: 170,
+  chf: 0.93,
 });
 
 const cachedHistory = (ageMs: number): History => ({
@@ -68,10 +83,14 @@ describe('previousDates', () => {
 });
 
 describe('fetchSnapshot', () => {
-  it('keeps only the needed codes plus eur = 1', async () => {
+  it('keeps every 3-letter key with a positive number plus eur = 1', async () => {
     const fetchImpl = mockFetch({ '@latest': { body: body('2026-10-28') } });
     const snap = await fetchSnapshot('latest', fetchImpl);
     expect(snap).toEqual({ date: '2026-10-28', rates: rates(1.112) });
+    expect(snap.rates).toMatchObject({ chf: 0.93, jpy: 170 });
+    expect(snap.rates).not.toHaveProperty('usdt');
+    expect(snap.rates).not.toHaveProperty('1inch');
+    expect(snap.rates).not.toHaveProperty('bad');
     expect(calledUrls(fetchImpl)).toEqual([snapshotUrl('latest', 'cdn')]);
   });
 

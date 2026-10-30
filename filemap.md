@@ -18,35 +18,35 @@ One line per entry: `path — what / when to touch`.
 - `src/main.tsx` — bootstrap: imports global.css, mounts `<AppProviders><App /></AppProviders>`, registers the service worker (`registerSW({ immediate: true })`)
 - `src/App.tsx` — layout shell: `.app` > `.layout` grid with Header, ConverterCard, MarketsSection
 - `src/vite-env.d.ts` — Vite client + `vite-plugin-pwa/client` types
-- `src/styles/tokens.css` — all SPEC §8 design tokens (light on `:root`, dark via `prefers-color-scheme` only); change only with the spec
+- `src/styles/tokens.css` — all SPEC §8 design tokens + the §11 generic badge tints `--tint-1`…`--tint-6` (light on `:root`, dark via `prefers-color-scheme` only); change only with the spec
 - `src/styles/global.css` — reset, body font, `.app`/`.layout` grid (one column below 900 px, `1.15fr 1fr` from 900 px; gutters 16 -> 24 px at 640 px), safe areas, hinge, reduced motion
 - `src/lib/` — pure helpers (no React/DOM), each with a `*.test.ts` next to it
-- `src/lib/currencies.ts` — `CurrencyCode`, `Currency`, `CURRENCIES` (EUR, USD, GBP, AED); touch to add a currency
-- `src/lib/currencies.test.ts` — sanity test for the currency list
-- `src/lib/money.ts` — `NUMBER_LOCALE` (nl-NL) / `DATE_LOCALE` (en-GB), convert, parseAmount, roundTo, formatMoney (narrowSymbol)/Number/Quantity/Timestamp/Percent, ozToGram/gramToOz, quantityFor, rateChangePct (+ `money.test.ts`)
+- `src/lib/currencies.ts` — currency registry (SPEC §11): `CurrencyCode` (= string), `CurrencyTint`, `Currency`, memoised `getCurrency(code)` (Intl name/symbol/decimals, overrides for EUR/USD/GBP/AED), `tintFor`, `compareByName`, `POPULAR`, `DEFAULT_CURRENCIES`, `LEGACY_CURRENCIES`
+- `src/lib/currencies.test.ts` — registry tests: names, symbols, decimals (JPY/KWD), unknown-code fallback, tints, lists, sorting
+- `src/lib/money.ts` — `NUMBER_LOCALE` (nl-NL) / `DATE_LOCALE` (en-GB), `DASH`, convert (NaN for a missing rate), parseAmount, roundTo, formatMoney (any ISO code, currency decimals, `—` for NaN)/Number/Rate/Quantity/Timestamp/Percent, ozToGram/gramToOz, quantityFor, rateChangePct (+ `money.test.ts`)
 - `src/lib/storage.ts` — readJSON/writeJSON/removeKey on localStorage under `wissel.*`, errors swallowed (+ `storage.test.ts`)
-- `src/i18n/en.ts` — SPEC §8 copy (English only); `MessageKey` = keys of `en`
+- `src/i18n/en.ts` — SPEC §8 + §11 copy (English only); `MessageKey` = keys of `en`; the `cur.*` keys are no longer used (names come from the registry)
 - `src/i18n/index.ts` — `t(key, params)` and `useT()` (returns `t`) (+ `index.test.tsx`)
 - `src/data/http.ts` — the only `fetch` caller: `fetchJson` with 8 s AbortController timeout, `FetchError`, shape guards
-- `src/data/rates.ts` — open.er-api fetch, `wissel.rates` cache, `isFresh` (6 h), cache-aware `getRates` (+ `rates.test.ts`)
+- `src/data/rates.ts` — open.er-api fetch (keeps every code, needs EUR + USD), `wissel.rates` cache, `isFresh` (6 h), cache-aware `getRates`, `availableCodes` (+ `rates.test.ts`)
 - `src/data/markets.ts` — BTC (CoinGecko -> Coinbase), XAU/XAG (gold-api), `fetchMarkets`, `wissel.markets` cache (+ `markets.test.ts`)
-- `src/data/history.ts` — daily EUR snapshots (currency-api: jsDelivr -> pages.dev), latest + previous day (-1..-3), `wissel.history` cache, cache-aware `getHistory` (+ `history.test.ts`)
+- `src/data/history.ts` — daily EUR snapshots (currency-api: jsDelivr -> pages.dev), latest + previous day (-1..-3), every 3-letter lower-case key, `wissel.history` cache, cache-aware `getHistory` (+ `history.test.ts`)
 - `src/data/usePolling.ts` — interval hook: runs on mount, pauses while hidden, runs again on visible (+ `usePolling.test.ts`)
-- `src/data/index.ts` — re-exports `useRates`, `useMarkets`, `useHistory`, `useRefreshAll` and the data types for components
-- `src/state/SettingsContext.tsx` — base/amount persisted to `wissel.settings` with `version: 3` (base/amount kept from any version, old language/theme ignored) (+ test)
+- `src/data/index.ts` — re-exports `useRates`, `useMarkets`, `useHistory`, `useRefreshAll`, `availableCodes` and the data types for components
+- `src/state/SettingsContext.tsx` — currencies/base/amount persisted to `wissel.settings` with `version: 4` (< 4 migrates to the legacy four, keeping base/amount); `normalise` enforces the invariants; `addCurrency`/`removeCurrency`/`setBase`/`setAmount` (+ test)
 - `src/state/DataContext.tsx` — single owner of fetching and polling; `useRates`, `useMarkets`, `useHistory`, `useRefreshAll` (+ test)
-- `src/state/AppProviders.tsx` — Settings + Data providers; tests pass `initialSettings` (storage not read) and `initialData` (no fetch, no polling)
+- `src/state/AppProviders.tsx` — Settings + Data providers; tests pass `initialSettings` (normalised, storage not read) and `initialData` (no fetch, no polling)
 - `src/test/mockFetch.ts` — `mockFetch(routes)` URL-substring fetch mock and a sample open.er-api body, for tests
 - `src/test/setup.ts` — Vitest setup (jest-dom matchers, clears localStorage after each test)
 - `src/components/Header/` — Header (no title, no props): caption row with refresh button + "updated" caption (+ `Header.test.tsx`)
 - `src/components/Converter/` — ConverterCard (placeholder card until task 3)
-- `src/components/Converter/ConverterCard.tsx` — converter card: micro label, four CurrencyRows, conversion, focus-on-row-tap; the card is the `converter` size container (+ `ConverterCard.test.tsx`)
+- `src/components/Converter/ConverterCard.tsx` — converter card: micro label, one CurrencyRow per chosen currency (`—` for codes missing from the rates), conversion, focus-on-row-tap; the card is the `converter` size container (+ `ConverterCard.test.tsx`)
 - `src/components/Converter/CurrencyRow.tsx` — one row: active = label + amount input (32 px when the card is >= 480 px, container query), inactive = whole-row button; empty-state shimmer
 - `src/components/ui/Card.tsx` — `<section>` surface: `--surface`, `--radius-card`, `--shadow-card`, padding 20
-- `src/components/ui/SymbolBadge.tsx` — tinted 36/38/40 px circle with a glyph (`tint`: eur/usd/gbp/aed/btc/gold/silver), aria-hidden
+- `src/components/ui/SymbolBadge.tsx` — tinted 18/28/32/36/38/40 px circle with a glyph (`tint`: eur/usd/gbp/aed/1…6/btc/gold/silver; 3-char symbols small, code fallbacks and longer symbols 11 px), aria-hidden
 - `src/components/Markets/MarketsSection.tsx` — section with `aria-label` "Markets" (no visible heading), the `markets` size container: tiles grid 1-up, 2-up from 560 px of section width; the rates tile first, then the three asset tiles, then a centred status line (LiveDot, "live · ns ago" ticking every 10 s, offline glyph when stale) (+ `MarketsSection.test.tsx`, covers RatesTile)
 - `src/components/Markets/MarketTile.tsx` — one asset row: badge, unit price captions in base currency, quantity the amount buys, change pill / ≈ oz caption, shimmer when data missing
-- `src/components/Markets/RatesTile.tsx` — first tile: base-currency SymbolBadge, `1 EUR` + "Exchange rate", 1 base unit in the other three currencies (4 decimals), shimmer without rates
+- `src/components/Markets/RatesTile.tsx` — first tile: base-currency SymbolBadge, `1 EUR` + "Exchange rate", 1 base unit in each other chosen currency (4 decimals, `—` when missing), shimmer without rates
 - `src/components/Markets/tile.module.css` — shared tile: outer `.cell` <article> = `tile` size container, inner `.tile` card (row layout >= 380 px, stacked grid areas `.asset`/`.rates` below), `.loading` shimmer; used by MarketTile and RatesTile
 - `src/components/ui/Pill.tsx` — rounded pill, variants up/down/neutral (24 h change)
 - `src/components/ui/LiveDot.tsx` — 6 px pulsing status dot; `muted` = grey, no pulse

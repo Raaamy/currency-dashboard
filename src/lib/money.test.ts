@@ -1,10 +1,12 @@
 import {
   convert,
+  DASH,
   DATE_LOCALE,
   formatMoney,
   formatNumber,
   formatPercent,
   formatQuantity,
+  formatRate,
   formatTimestamp,
   gramToOz,
   NUMBER_LOCALE,
@@ -28,6 +30,12 @@ describe('convert', () => {
     expect(convert(108, 'USD', 'EUR', RATES)).toBeCloseTo(100, 10);
     expect(convert(85, 'GBP', 'USD', RATES)).toBeCloseTo(108, 10);
     expect(convert(42, 'AED', 'AED', RATES)).toBeCloseTo(42, 10);
+  });
+
+  it('returns NaN when a rate is missing or not positive', () => {
+    expect(convert(100, 'EUR', 'CHF', RATES)).toBeNaN();
+    expect(convert(100, 'CHF', 'EUR', RATES)).toBeNaN();
+    expect(convert(100, 'EUR', 'USD', { EUR: 1, USD: 0 })).toBeNaN();
   });
 });
 
@@ -122,6 +130,36 @@ describe('formatMoney', () => {
 
   it('never prints negative zero', () => {
     expect(plain(formatMoney(-0, 'EUR'))).toBe('€ 0,00');
+  });
+
+  it('defaults to the minor units of any ISO currency', () => {
+    expect(formatMoney(1234.56, 'JPY', { symbol: false })).toBe('1.235');
+    expect(formatMoney(1.2345, 'KWD', { symbol: false })).toBe('1,235');
+    expect(plain(formatMoney(12.5, 'CHF'))).toBe('CHF 12,50');
+    expect(formatMoney(1234.56, 'JPY', { symbol: false, decimals: 2 })).toBe('1.234,56');
+  });
+
+  it('formats non-finite values (missing rates) as a dash and never throws', () => {
+    expect(DASH).toBe('—');
+    expect(formatMoney(NaN, 'EUR')).toBe('—');
+    expect(formatMoney(Infinity, 'USD', { symbol: false })).toBe('—');
+    expect(plain(formatMoney(5, '1$'))).toBe('1$ 5,00');
+  });
+});
+
+describe('formatRate', () => {
+  it('uses 4 decimals below 10, 3 below 100 and 2 from 100 (SPEC §11)', () => {
+    expect(formatRate(1.11619)).toBe('1,1162');
+    expect(formatRate(38.2149)).toBe('38,215');
+    expect(formatRate(169.421)).toBe('169,42');
+    expect(formatRate(0.85)).toBe('0,8500');
+    expect(formatRate(10)).toBe('10,000');
+    expect(formatRate(100)).toBe('100,00');
+    expect(formatRate(4123.456)).toBe('4.123,46');
+  });
+
+  it('formats non-finite values as a dash', () => {
+    expect(formatRate(NaN)).toBe('—');
   });
 });
 

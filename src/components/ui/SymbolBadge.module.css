@@ -6,9 +6,28 @@
   border-radius: var(--radius-pill);
   color: var(--text);
   font: var(--font-display);
-  font-size: 18px;
+  /* Glyph size per badge size (set by the .sNN classes); .small / .tiny cap it. */
+  font-size: var(--glyph, 18px);
   line-height: 1;
   white-space: nowrap;
+}
+
+.s18 {
+  --glyph: 11px;
+  width: 18px;
+  height: 18px;
+}
+
+.s28 {
+  --glyph: 14px;
+  width: 28px;
+  height: 28px;
+}
+
+.s32 {
+  --glyph: 16px;
+  width: 32px;
+  height: 32px;
 }
 
 .s36 {
@@ -26,8 +45,14 @@
   height: 40px;
 }
 
+/* Symbols of 3 characters (AED). */
 .small {
-  font-size: 14px;
+  font-size: min(var(--glyph, 18px), 14px);
+}
+
+/* Code fallbacks (CHF) and symbols longer than 3 characters. */
+.tiny {
+  font-size: 11px;
 }
 
 /* `background`, not `background-color`: gold/silver tints are gradients. */
@@ -57,4 +82,28 @@
 
 .silver {
   background: var(--tint-silver);
+}
+
+.tint1 {
+  background: var(--tint-1);
+}
+
+.tint2 {
+  background: var(--tint-2);
+}
+
+.tint3 {
+  background: var(--tint-3);
+}
+
+.tint4 {
+  background: var(--tint-4);
+}
+
+.tint5 {
+  background: var(--tint-5);
+}
+
+.tint6 {
+  background: var(--tint-6);
 }

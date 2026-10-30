@@ -7,6 +7,8 @@ describe('t()', () => {
     expect(t('convert')).toBe('Convert');
     expect(t('asset.XAU')).toBe('Gold');
     expect(t('cur.USD')).toBe('US dollar');
+    expect(t('addCurrency')).toBe('Add currency');
+    expect(t('removeCurrency', { code: 'GBP' })).toBe('Remove GBP');
   });
 
   it('replaces placeholders', () => {
@@ -23,9 +25,22 @@ describe('t()', () => {
     expect(t('no.such.key' as MessageKey)).toBe('no.such.key');
   });
 
-  it('has exactly the SPEC §8 keys', () => {
-    expect(Object.keys(en)).toHaveLength(21);
-    for (const removed of ['settings', 'close', 'appearance', 'theme.dark', 'lang.nl']) {
+  it('has exactly the SPEC §8 and §11 keys', () => {
+    expect(Object.keys(en)).toHaveLength(30);
+    for (const key of [
+      'edit',
+      'done',
+      'addCurrency',
+      'removeCurrency',
+      'searchCurrency',
+      'popular',
+      'allCurrencies',
+      'noResults',
+      'close',
+    ]) {
+      expect(en).toHaveProperty(key);
+    }
+    for (const removed of ['settings', 'appearance', 'theme.dark', 'lang.nl']) {
       expect(en).not.toHaveProperty(removed);
     }
   });

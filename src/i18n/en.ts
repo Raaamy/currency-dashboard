@@ -21,6 +21,16 @@ export const en = {
   'asset.BTC': 'Bitcoin',
   'asset.XAU': 'Gold',
   'asset.XAG': 'Silver',
+  // SPEC §11 "Copy (en) additions" (converter edit mode, currency picker)
+  edit: 'Edit',
+  done: 'Done',
+  addCurrency: 'Add currency',
+  removeCurrency: 'Remove {code}',
+  searchCurrency: 'Search currency',
+  popular: 'Popular',
+  allCurrencies: 'All currencies',
+  noResults: 'No currencies found',
+  close: 'Close',
 };
 
 export type MessageKey = keyof typeof en;
