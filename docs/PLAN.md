@@ -141,3 +141,28 @@ input size by card width (480 px). SPEC §8 "Responsive / foldable". Verify: lin
 pass; every reference viewport (390x844, 474x696, 680x470, 680x900, 904x640, 1280x800) with
 amounts 1250 and 10000 shows no truncated text (scripted check: no element with
 `scrollWidth > clientWidth` inside tiles/rows) and no horizontal page overflow.
+
+## Task 13 — Currency registry and settings model `[~]`  (tier: careful, deps: 12)
+
+SPEC §11 "Model", "Settings", tints, `formatRate`, copy additions: currency registry via
+Intl, rates and history keep all codes, `CurrencyCode = string`, settings v4 with
+`currencies` + migration + invariants (`addCurrency`/`removeCurrency`), the six
+`--tint-n` tokens, all §11 i18n keys. Existing UI keeps working with the chosen list
+(converter rows from `currencies`, rates tile lines from `currencies`) so tasks 14/15 can
+start from a green tree. Verify: unit tests for registry (names, symbols, decimals JPY/KWD,
+fallback for unknown codes, stable tints), migration, invariants, `formatRate`; rates/history
+tests updated; lint/build/test pass.
+
+## Task 14 — Converter edit mode, add row, currency picker `[ ]`  (tier: careful, deps: 13, parallel with 15)
+
+SPEC §11 "Converter card" and "Currency picker". Files: `src/components/Converter/**`,
+new `src/components/Picker/**`, the picker mount in `App.tsx`. Verify: component tests
+(add via picker, remove in edit mode, min 2, removing base moves base, search filter),
+browser check at 390 and 680 px, lint/build/test pass.
+
+## Task 15 — Rates tile chip grid `[ ]`  (tier: medium, deps: 13, parallel with 14)
+
+SPEC §11 "Rates tile (chip grid)" and the 2-up asset arrangement. Files:
+`src/components/Markets/**`. Verify: component tests (chips per chosen currency, JPY
+formatting, change colours), no-truncation script at the six reference viewports with 2
+and 8 currencies, lint/build/test pass.

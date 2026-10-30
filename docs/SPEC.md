@@ -23,8 +23,7 @@ laid out for the foldable iPhone (narrow outer screen, near-square inner screen)
 ## 2. Non-goals (MVP)
 
 - No accounts, no server, no analytics.
-- No extra currencies beyond the four (the code must make adding one a one-line change
-  in `src/lib/currencies.ts`, but there is no picker UI).
+- (Superseded) The fixed four-currency list is replaced by user-chosen currencies, see §11.
 - No historical charts, no alerts, no portfolio.
 - No Capacitor packages installed yet; only the documented path (`docs/IOS.md`).
 
@@ -241,7 +240,9 @@ refresh icon button (tap = refresh everything) and "Rates updated 29 Oct, 02:02"
   - Empty/zero amount: quantity `0 BTC` / `0 g` in `--text-2`.
 - Stale/offline: tile shows a small cloud-off glyph next to the timestamp, numbers dim
   to 70 %.
-- **Rates tile** (first tile, above Bitcoin, same card styling): left a 38 px SymbolBadge
+- **Rates tile**: superseded by the chip grid in §11 "Rates tile (chip grid)"; the text
+  below describes the previous three-line version and is kept for history only.
+  (old) (first tile, above Bitcoin, same card styling): left a 38 px SymbolBadge
   of the base currency; texts: `1 EUR` (16/700, the base code) with caption
   "Wisselkoers" / "Exchange rate"; right column: one line per other currency in
   `CURRENCIES` order, `0,8373 GBP` style: value 17/700 tabular (4 decimals,
@@ -341,3 +342,97 @@ no `window.location` routing.
   open) and 1280x800 (desktop): no horizontal scroll, no clipped text, no overlap.
 - Dark mode has no unreadable contrast (text on surface >= 4.5:1).
 - PWA installable (manifest + icons + service worker), Lighthouse PWA checks pass.
+
+## 11. User-chosen currencies (supersedes the fixed four)
+
+### Model
+- Any currency that open.er-api returns (~160 ISO codes) can be chosen. `Rates.rates`
+  keeps every code from the response (`Record<string, number>`, EUR = 1); the history
+  snapshots keep every 3-letter fiat key present in the response (lower-case).
+- `src/lib/currencies.ts` becomes a registry: `getCurrency(code): Currency` builds
+  `{ code, symbol, name, decimals, tint }` on demand: `name` from
+  `new Intl.DisplayNames(['en'], { type: 'currency' })`, falling back to the code;
+  `symbol` from `Intl.NumberFormat('nl-NL', { style: 'currency', currency: code,
+  currencyDisplay: 'narrowSymbol' })` parts, falling back to the code; `decimals` from
+  that formatter's `resolvedOptions().maximumFractionDigits` (JPY 0, EUR 2, KWD 3).
+  Hand-tuned overrides stay for EUR, USD, GBP, AED (symbol + their named tints).
+  `POPULAR = [EUR, USD, GBP, AED, CHF, JPY, CNY, CAD, AUD, TRY, SAR, INR, SEK, NOK, DKK,
+  PLN, THB, SGD, HKD, ZAR]`.
+- Tints: EUR/USD/GBP/AED keep `--tint-eur/usd/gbp/aed`; every other code gets one of six
+  new soft tokens `--tint-1` to `--tint-6` chosen by a stable hash of the code (sum of
+  char codes mod 6). Light: `#E3F0F4 #F4EBDD #E9E6F7 #E6F2E4 #F7E4E8 #EDEBE7`; dark:
+  `#20343B #3A3125 #2C2940 #233325 #3D262C #312E2A`. Badge text colour stays `--text`.
+- `CurrencyCode` becomes `string` (validated against the rates table where it matters).
+
+### Settings
+- `Settings = { currencies: string[]; base: string; amount: string }`, version 4.
+  Default `currencies = [EUR, USD]`, `base = EUR`.
+- Migration: stored version < 4 (users who saw the fixed four) get
+  `[EUR, USD, GBP, AED]`; their base and amount are kept.
+- Invariants: at least 2 currencies, no duplicates, `base` is always in `currencies`
+  (removing the base makes the first remaining currency the base). Order = insertion
+  order (new ones are appended). Setters: `addCurrency(code)`, `removeCurrency(code)`.
+- Codes not present in the current rates table are kept but render as `—` (the
+  provider may drop a code temporarily).
+
+### Converter card
+- Rows follow `settings.currencies` order. Header line: micro label "CONVERT" left, a
+  text button "Edit" / "Done" right (`--accent` text, 13/700, 44 px hit area).
+- Below the last row: an "Add currency" row (same 64 px height, `--radius-row`): 40 px
+  dashed circle (`1.5px dashed var(--accent)`) with a "+" glyph in `--accent`, label
+  "Add currency" 15/700 in `--accent`. Hover/press `--line` background. Opens the picker.
+- Edit mode: every row gets a 22 px round remove button (`--down` background, white
+  minus) at the far left, before the badge, with `aria-label` "Remove {code}"; tapping
+  a row in edit mode does nothing else (no base switch); the amount column is empty in
+  edit mode (row shows badge, code and name only). With only 2 currencies the remove
+  buttons are hidden. The "Add currency" row stays visible in edit mode. "Done" leaves
+  edit mode.
+- Currencies with 0 decimals (JPY) format without decimals.
+
+### Currency picker (sheet)
+- Native `<dialog>` with `showModal()`: bottom sheet below 640 px (full width, top
+  corners `--radius-card`, max-height 85dvh, slides up 200 ms, drag handle 36x4
+  `--line`), centred dialog 440 px wide (max-height 80dvh) from 640 px. Backdrop
+  `rgba(43,40,36,.35)`. Escape, backdrop tap and the close button close it; body scroll
+  locked while open; the search field is focused on open only on `(pointer: fine)`
+  devices (no keyboard pop on phones).
+- Content: title "Add currency" 22/800 + 44 px round close button; a search field
+  (`--bg` background, `--radius-pill`, 44 px tall, 16 px font, search glyph, placeholder
+  "Search currency", `type="search"`, `enterkeyhint="search"`); then a scrolling list:
+  section "POPULAR" (the POPULAR codes that the rates table has) and section "ALL
+  CURRENCIES" (every other code in the rates table, sorted by English name). While the
+  search has text, sections collapse into one filtered list matching code or name
+  (case- and accent-insensitive); "No currencies found" when empty.
+- List item 52 px: 32 px SymbolBadge, code 15/700 + name 13 `--text-2`, and on the right
+  a check glyph in `--up` when the currency is already chosen. Tapping a non-chosen item
+  adds it (sheet stays open so several can be added); tapping a chosen item removes it
+  unless that would leave fewer than 2 (then nothing happens). `aria-pressed` reflects
+  the chosen state.
+
+### Rates tile (chip grid)
+- Always the first tile and always the full width of the markets grid
+  (`grid-column: 1 / -1`). Header: 28 px SymbolBadge of the base + "1 EUR" (16/700) with
+  "Exchange rate" caption.
+- Below: one chip per chosen currency except the base, in settings order, in
+  `display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px`.
+  Chip: `--bg` background, radius 14 px, padding 10 12; line 1 = 18 px SymbolBadge +
+  code 12/700 in `--text-2`; line 2 = value 16/800 tabular (`formatRate`); line 3 =
+  daily change 12/700 (`--up` / `--down` / `--text-2`, `formatPercent`, omitted without
+  snapshots). Codes missing from the rates table show `—`.
+- `formatRate(value)` in `lib/money.ts`: nl-NL, 4 decimals below 10, 3 below 100,
+  2 from 100 (`1,1162`, `38,215`, `169,42`).
+- With the 2-up markets grid (>= 560 px of section width) the asset tiles follow below:
+  Bitcoin spans the full width, Gold and Silver side by side.
+
+### Copy (en) additions
+| key | en |
+|-----|----|
+| edit | Edit |
+| done | Done |
+| addCurrency | Add currency |
+| removeCurrency | Remove {code} |
+| searchCurrency | Search currency |
+| popular | Popular |
+| allCurrencies | All currencies |
+| noResults | No currencies found |
+| close | Close |
