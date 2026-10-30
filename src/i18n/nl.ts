@@ -11,6 +11,7 @@ export const nl = {
   perGram: 'per gram',
   perBitcoin: 'per bitcoin',
   approxOz: '≈ {n} oz',
+  exchangeRate: 'Wisselkoers',
   refresh: 'Vernieuwen',
   settings: 'Instellingen',
   close: 'Sluiten',

@@ -1,0 +1,30 @@
+/* Shared market tile card (asset tiles and the rates tile); tokens only. */
+.tile {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  overflow: hidden;
+  background: var(--surface);
+  border-radius: calc(var(--radius-row) + 4px);
+  box-shadow: var(--shadow-card);
+}
+
+/* Missing quote or rates: soft shimmer sweep. */
+.loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--line), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 1.4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}

@@ -85,6 +85,34 @@ describe('MarketsSection', () => {
     expect(text(btc)).toContain('—');
   });
 
+  it('shows 1 EUR in the other currencies on the rates tile', () => {
+    const { container } = renderSection();
+    const rates = tile(container, 'RATES');
+    expect(within(rates).getByRole('heading', { name: '1 EUR' })).toBeInTheDocument();
+    expect(text(rates)).toContain(t('nl', 'exchangeRate'));
+    const lines = Array.from(rates.querySelectorAll('p'))
+      .map(text)
+      .filter((l) => l !== t('nl', 'exchangeRate'));
+    expect(lines).toEqual(['1,1000 USD', '0,8500 GBP', '4,0000 AED']);
+  });
+
+  it('follows the base currency on the rates tile', () => {
+    const { container } = renderSection({ base: 'USD' });
+    const rates = tile(container, 'RATES');
+    expect(within(rates).getByRole('heading', { name: '1 USD' })).toBeInTheDocument();
+    const lines = Array.from(rates.querySelectorAll('p'))
+      .map(text)
+      .filter((l) => l !== t('nl', 'exchangeRate'));
+    expect(lines).toEqual(['0,9091 EUR', '0,7727 GBP', '3,6364 AED']);
+  });
+
+  it('shows dashes and shimmer on the rates tile without rates', () => {
+    const { container } = renderSection({}, { rates: null });
+    const rates = tile(container, 'RATES');
+    expect(rates).toHaveAttribute('aria-busy', 'true');
+    expect(text(rates).split('—')).toHaveLength(4);
+  });
+
   it('ticks the "ago" caption every 10 s', () => {
     vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'Date'] });
     try {

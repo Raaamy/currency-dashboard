@@ -13,6 +13,7 @@ export const en: Record<MessageKey, string> = {
   perGram: 'per gram',
   perBitcoin: 'per bitcoin',
   approxOz: '≈ {n} oz',
+  exchangeRate: 'Exchange rate',
   refresh: 'Refresh',
   settings: 'Settings',
   close: 'Close',

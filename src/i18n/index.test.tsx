@@ -34,7 +34,7 @@ describe('t()', () => {
 
   it('has the same keys in nl and en', () => {
     expect(Object.keys(en).sort()).toEqual(Object.keys(nl).sort());
-    expect(Object.keys(nl)).toHaveLength(28);
+    expect(Object.keys(nl)).toHaveLength(29);
   });
 });
 

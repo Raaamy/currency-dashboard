@@ -14,6 +14,7 @@ import {
 } from '@/lib/money';
 import { useSettings } from '@/state/SettingsContext';
 import { Pill, type PillVariant } from '@/components/ui/Pill';
+import tileStyles from './tile.module.css';
 import styles from './MarketTile.module.css';
 
 export interface MarketTileProps {
@@ -78,7 +79,7 @@ export function MarketTile({ id, stale = false }: MarketTileProps) {
     below = <span className={styles.caption}>{DASH}</span>;
   }
 
-  const tileClass = ready ? styles.tile : `${styles.tile} ${styles.loading}`;
+  const tileClass = ready ? tileStyles.tile : `${tileStyles.tile} ${tileStyles.loading}`;
   const numberClass = [
     styles.quantity,
     ready && empty ? styles.muted : '',

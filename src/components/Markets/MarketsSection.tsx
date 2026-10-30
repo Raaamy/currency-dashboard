@@ -4,6 +4,7 @@ import type { AssetId } from '@/data';
 import { useT } from '@/i18n';
 import { LiveDot } from '@/components/ui/LiveDot';
 import { MarketTile } from './MarketTile';
+import { RatesTile } from './RatesTile';
 import styles from './MarketsSection.module.css';
 
 const ASSETS: readonly AssetId[] = ['BTC', 'XAU', 'XAG'];
@@ -30,7 +31,7 @@ function CloudOffIcon() {
   );
 }
 
-/** Markets heading (live / offline state) and the BTC, gold and silver tiles (SPEC §8). */
+/** Markets heading (live / offline state), the BTC, gold and silver tiles and the rates tile (SPEC §8). */
 export function MarketsSection() {
   const t = useT();
   const headingId = useId();
@@ -75,6 +76,7 @@ export function MarketsSection() {
         {ASSETS.map((id) => (
           <MarketTile key={id} id={id} stale={stale} />
         ))}
+        <RatesTile />
       </div>
     </section>
   );

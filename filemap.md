@@ -9,8 +9,8 @@ One line per entry: `path — what / when to touch`.
 - `filemap.md` — this index
 - `package.json` — deps and scripts (dev, build, preview, lint, format, test, test:watch); touch when adding deps/scripts
 - `vite.config.ts` — Vite (`base: './'`, `@/` alias) + Vitest config (jsdom, globals, setup file) + VitePWA (autoUpdate, manifest, precache, NetworkFirst `wissel-api` cache for the API hosts)
-- `pwa-assets.config.ts` � `@vite-pwa/assets-generator` config (minimal2023 preset, apricot maskable/apple bg); run `npm run icons`
-- `public/` � `icon.svg` (source icon) + generated favicon.ico, apple-touch-icon-180x180, pwa-64/192/512, maskable-icon-512 PNGs
+- `pwa-assets.config.ts` — `@vite-pwa/assets-generator` config (minimal2023 preset, apricot maskable/apple bg); run `npm run icons`
+- `public/` — `icon.svg` (source icon) + generated favicon.ico, apple-touch-icon-180x180, pwa-64/192/512, maskable-icon-512 PNGs
 - `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json` — strict TS; `@/*` path alias (keep in sync with vite.config.ts)
 - `eslint.config.js` — ESLint flat config from the Vite React TS template
 - `.prettierrc`, `.prettierignore` — Prettier settings; Markdown is excluded so docs keep their hand formatting
@@ -44,8 +44,10 @@ One line per entry: `path — what / when to touch`.
 - `src/components/Converter/CurrencyRow.tsx` — one row: active = label + amount input, inactive = whole-row button; empty-state shimmer
 - `src/components/ui/Card.tsx` — `<section>` surface: `--surface`, `--radius-card`, `--shadow-card`, padding 20
 - `src/components/ui/SymbolBadge.tsx` — tinted 36/38/40 px circle with a glyph (`tint`: eur/usd/gbp/aed/btc/gold/silver), aria-hidden
-- `src/components/Markets/MarketsSection.tsx` — markets heading (LiveDot, "live · n s geleden" ticking every 10 s, offline glyph when stale) and the three tiles (+ `MarketsSection.test.tsx`)
+- `src/components/Markets/MarketsSection.tsx` — markets heading (LiveDot, "live · n s geleden" ticking every 10 s, offline glyph when stale) the three asset tiles and the rates tile (+ `MarketsSection.test.tsx`, covers RatesTile)
 - `src/components/Markets/MarketTile.tsx` — one asset row: badge, unit price captions in base currency, quantity the amount buys, change pill / ≈ oz caption, shimmer when data missing
+- `src/components/Markets/RatesTile.tsx` — fourth tile: base-currency SymbolBadge, `1 EUR` + "Wisselkoers", 1 base unit in the other three currencies (4 decimals), shimmer without rates
+- `src/components/Markets/tile.module.css` — shared tile card (`.tile`) and `.loading` shimmer used by MarketTile and RatesTile
 - `src/components/ui/Pill.tsx` — rounded pill, variants up/down/neutral (24 h change)
 - `src/components/ui/LiveDot.tsx` — 6 px pulsing status dot; `muted` = grey, no pulse
 - `src/components/Settings/SettingsSheet.tsx` — native `<dialog>` settings sheet (bottom sheet < 640 px, centred above); language + appearance (+ `SettingsSheet.test.tsx`, covers Header too)

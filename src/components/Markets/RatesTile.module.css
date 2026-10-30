@@ -1,0 +1,47 @@
+/* Rates tile content; the card itself comes from tile.module.css (tokens only). */
+.texts {
+  min-width: 0;
+}
+
+.name {
+  font: 700 16px / 22px var(--font-family);
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caption {
+  display: block;
+  font: var(--font-caption);
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.line {
+  white-space: nowrap;
+}
+
+.value {
+  font: 700 17px / 22px var(--font-family);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.code {
+  display: inline-block;
+  min-width: 2.6em;
+  margin-left: 6px;
+  font: 600 13px / 18px var(--font-family);
+  color: var(--text-2);
+  text-align: left;
+}

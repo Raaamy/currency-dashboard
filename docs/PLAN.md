@@ -94,7 +94,7 @@ Lighthouse PWA installable; lint/test pass.
 After tasks 3-6: run build/lint/test, open preview in the browser at 390x844, 474x696,
 904x640 and 1280x800, both color schemes, check every item of SPEC §10, commit.
 
-## Task 7 — Rates tile `[~]`  (tier: medium, deps: 4)
+## Task 7 — Rates tile `[x]`  (tier: medium, deps: 4)
 
 Add the fourth "rates" tile to the markets section per SPEC §8 "Rates tile": 1 unit of
 the base currency to the other three, 4 decimals, same card styling as the asset tiles,
