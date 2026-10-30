@@ -102,3 +102,15 @@ shimmer when rates are missing. New i18n key `exchangeRate` in `nl.ts`/`en.ts`.
 Verify: component test (base EUR, rates USD 1.1 / GBP 0.85 / AED 4 -> `1,1000 USD`,
 `0,8500 GBP`, `4,0000 AED`; base USD -> `0,9091 EUR`), manual check at 390 and 904 px,
 lint/build/test pass.
+
+## Task 8 — Daily change percentages `[~]`  (tier: careful, deps: 7)
+
+Add the daily-snapshot source (`data/history.ts`, SPEC §6 last row + "Daily change"),
+`rateChangePct` in `lib/money.ts`, a `history` source in `DataContext` (`useHistory()`,
+refreshed with the rates, part of `refreshAll` and `InitialData`), i18n key
+`sinceYesterday`, then: change text per line in the rates tile, ChangePill for gold and
+silver, and the BTC pill falling back to the snapshot change (SPEC §8 "Markets section"
+and "Rates tile"). Verify: unit tests for `rateChangePct` (both directions, eur=1,
+unchanged -> 0), for the history fetch (latest + previous day, 404 fallback to -2, cache,
+CDN -> pages.dev fallback), component tests for the pills/texts with fixed snapshots;
+lint/build/test pass; manual check at 390 and 904 px.

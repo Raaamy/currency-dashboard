@@ -125,6 +125,13 @@ Quantity the typed amount buys: `quantity = convert(amount, base, 'USD', rates) 
 | Bitcoin | `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true` -> `bitcoin.usd`, `bitcoin.usd_24h_change` | `https://api.coinbase.com/v2/prices/BTC-USD/spot` -> `data.amount` (no change %) | every 60 s while visible |
 | Gold | `https://api.gold-api.com/price/XAU` -> `price` (USD per troy oz), `updatedAt` | cached copy | every 60 s while visible |
 | Silver | `https://api.gold-api.com/price/XAG` -> same shape | cached copy | every 60 s while visible |
+| Daily snapshots (for "change since yesterday") | `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@{latest\|YYYY-MM-DD}/v1/currencies/eur.min.json` -> `{ date, eur: { usd, gbp, aed, xau, xag, btc, ... } }` (units per 1 EUR; `xau`/`xag` are troy ounces per EUR, `btc` bitcoin per EUR) | `https://{latest\|YYYY-MM-DD}.currency-api.pages.dev/v1/currencies/eur.min.json` | with the fiat rates (6 h, visible) |
+
+Daily change: fetch `latest` (gives `date`), then the snapshot of `date - 1 day` (if that
+404s, try -2 and -3). `rateChangePct(today, previous, from, to)` = change of the
+quantity "units of `to` per 1 `from`" = `((today[to]/today[from]) / (previous[to]/previous[from]) - 1) * 100`,
+with `eur = 1`. Rates tile line `base -> code` uses `rateChangePct(base, code)`; an asset's
+price in base uses `rateChangePct(asset, base)`. Both snapshots are cached (`wissel.history`).
 
 Rules:
 - Every fetch has an 8 s timeout (`AbortController`). Failure never clears the last good
@@ -233,8 +240,11 @@ trapped in the dialog; Escape and backdrop click close it.
     caption "€ 3.608,95 per troy ounce".
   - numbers (right): quantity the typed amount buys, 20/800 tabular, with unit:
     BTC "0,01978 BTC"; gold/silver in grams "10,77 g" (ounces not shown as quantity).
-    Under it: BTC -> ChangePill (`−3,1 %`, up/down soft pill); gold/silver -> caption
-    "≈ 0,346 oz".
+    Under it: BTC -> ChangePill (`−3,1 %`, up/down soft pill; CoinGecko 24 h, falling
+    back to the daily-snapshot change when CoinGecko's figure is missing); gold/silver ->
+    one row `≈ 0,346 oz` caption followed by the same ChangePill with the daily-snapshot
+    change of the asset's price in the base currency (pill omitted while no snapshots).
+    Every pill carries `title`/`aria-label` "t.o.v. gisteren" / "vs yesterday".
   - Quantity formatting: BTC = up to 5 significant digits, max 8 decimals, trailing
     zeros stripped (`0,01978`, `1,2345`, `12,5`); grams = 2 decimals under 100, else 0.
   - Empty/zero amount: quantity `0 BTC` / `0 g` in `--text-2`.
@@ -246,7 +256,10 @@ trapped in the dialog; Escape and backdrop click close it.
   `CURRENCIES` order, `0,8373 GBP` style: value 17/700 tabular (4 decimals,
   `formatNumber`) followed by the code 13/600 in `--text-2`, right-aligned, lines 2 px
   apart. Values are `convert(1, base, code, rates)`. No rates -> `—` and shimmer. Follows
-  the base currency: with USD as base it shows 1 USD to EUR, GBP, AED.
+  the base currency: with USD as base it shows 1 USD to EUR, GBP, AED. After the code,
+  the daily change `rateChangePct(base, code)` as plain text 13/700 in `--up` (> 0),
+  `--down` (< 0) or `--text-2` (0), formatted with `formatPercent`, `min-width: 4.2em`
+  right-aligned so the three lines align; omitted while no snapshots are known.
 
 ### Responsive / foldable
 
@@ -277,6 +290,7 @@ trapped in the dialog; Escape and backdrop click close it.
 | perGram | per gram | per gram |
 | perBitcoin | per bitcoin | per bitcoin |
 | exchangeRate | Wisselkoers | Exchange rate |
+| sinceYesterday | t.o.v. gisteren | vs yesterday |
 | approxOz | ≈ {n} oz | ≈ {n} oz |
 | refresh | Vernieuwen | Refresh |
 | settings | Instellingen | Settings |
