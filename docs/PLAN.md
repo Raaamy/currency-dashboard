@@ -166,3 +166,14 @@ SPEC §11 "Rates tile (chip grid)" and the 2-up asset arrangement. Files:
 `src/components/Markets/**`. Verify: component tests (chips per chosen currency, JPY
 formatting, change colours), no-truncation script at the six reference viewports with 2
 and 8 currencies, lint/build/test pass.
+
+## Task 16 — Formatted amount input and reordering `[~]`  (tier: careful, deps: 15)
+
+SPEC §12: `src/lib/amountInput.ts` (`formatAmountInput`, pure, fully tested), live
+formatting with caret preservation in the active row, re-format on base change; edit-mode
+drag handles with dnd-kit (pointer + keyboard, announcements), `moveCurrency` setter, i18n
+keys. Verify: unit tests for the formatter (grouping, both separators, decimals 0/2/3,
+leading zeros, trailing separator, caret after inserting/removing a group dot, backspace
+on a dot, paste of `1234567.891`), component tests (typing `10000` shows `10.000`; keyboard
+reorder moves USD below GBP and the chips follow), browser check typing and dragging at
+390 and 680 px, lint/build/test pass.

@@ -436,3 +436,59 @@ no `window.location` routing.
 | allCurrencies | All currencies |
 | noResults | No currencies found |
 | close | Close |
+
+## 12. Formatted amount input and reordering
+
+### Amount input formatting (live, while typing)
+- The active row's input always shows the amount in nl-NL notation: thousands grouped
+  with `.`, decimal separator `,` (`10.000`, `1.234,5`, `0,75`). Stored `amount` is that
+  display text (it stays parseable by `parseAmount`).
+- Pure helper in `src/lib/amountInput.ts`:
+  `formatAmountInput(raw: string, caret: number, decimals: number, lastKey?: string)
+  -> { text: string; caret: number }`. Rules:
+  - Keep digits and at most one decimal separator; drop everything else.
+  - Which character is the decimal separator: a `,` anywhere, or a `.` that the user
+    just typed at the end (or that has 1-2 digits after it and is the only separator
+    when pasting, e.g. `12.5`, `0.75`). A `.` followed by exactly three digits, or
+    several `.`, are thousands separators (`1.234` = 1234, matching `parseAmount`).
+  - Integer part: strip leading zeros (keep a single `0` before a decimal or alone),
+    group per three with `.`.
+  - Fraction: at most `decimals` digits (extra digits are dropped); when `decimals` is 0
+    the separator is ignored.
+  - A trailing separator is kept while typing (`12,`), shown as `,`.
+  - Caret: count the significant characters (digits and the decimal separator) left of
+    the caret in `raw`, and place the new caret after the same count in `text`.
+  - Deleting a thousands `.` with Backspace (the formatted text would come back
+    unchanged) deletes the digit before it instead; Delete removes the digit after it.
+- The input applies the result and restores the caret with `setSelectionRange` in a
+  layout effect. Paste works through the same path. Empty input stays empty
+  (placeholder `0`).
+- When the base currency changes, the stored amount is re-formatted with the new
+  currency's decimals (extra decimals dropped).
+
+### Reordering in edit mode
+- Each row in edit mode shows a drag handle at the far right (grip glyph, six dots,
+  `--text-2`, 44x44 hit area, `aria-label` "Reorder {code}", `touch-action: none`,
+  cursor `grab`). Only the handle starts a drag, so the page still scrolls on touch.
+- Library: `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities` (current stable),
+  vertical list strategy, `restrictToVerticalAxis` / parent-element modifiers from
+  `@dnd-kit/modifiers`. Sensors: Pointer (activation distance 4 px) and Keyboard
+  (`sortableKeyboardCoordinates`: Space/Enter lifts, arrows move, Space/Enter drops,
+  Escape cancels). Screen-reader announcements in English via dnd-kit `accessibility`
+  `announcements` (e.g. "Picked up USD", "USD moved to position 2 of 4", "USD dropped at
+  position 2 of 4") built from the i18n dictionary.
+- While dragging: the row lifts (`--shadow-card`, `--surface` background, scale 1.02),
+  the others slide with `transform` transitions (`var(--dur) var(--ease)`; none under
+  reduced motion). The "Add currency" row is not sortable.
+- On drop the new order is saved via a settings setter `moveCurrency(from: string,
+  to: string)` (moves `from` to the index of `to`); the base stays the base. The
+  converter rows and the rates-tile chips follow the stored order.
+
+### Copy (en) additions
+| key | en |
+|-----|----|
+| reorder | Reorder {code} |
+| dnd.picked | Picked up {code}. |
+| dnd.moved | {code} moved to position {pos} of {total}. |
+| dnd.dropped | {code} dropped at position {pos} of {total}. |
+| dnd.cancelled | Reordering cancelled. {code} returned to position {pos}. |
