@@ -273,6 +273,22 @@ describe('SettingsProvider invariants', () => {
     act(() => api.setMetalUnit('kg'));
     expect(api.metalUnit).toBe('kg');
   });
+
+  it('converts the typed quantity when the unit changes with a metal base', () => {
+    renderProvider({ items: ['EUR', 'XAU'], base: 'XAU', amount: '895,93', metalUnit: 'g' });
+    act(() => api.setMetalUnit('oz'));
+    expect(api.amount).toBe('28,805');
+    act(() => api.setMetalUnit('kg'));
+    expect(api.amount).toBe('0,896');
+    act(() => api.setMetalUnit('g'));
+    expect(api.amount).toBe('896,00');
+  });
+
+  it('keeps a fiat-base amount unchanged when the unit changes', () => {
+    renderProvider({ items: ['EUR', 'XAU'], base: 'EUR', amount: '100.000', metalUnit: 'g' });
+    act(() => api.setMetalUnit('oz'));
+    expect(api.amount).toBe('100.000');
+  });
 });
 
 describe('SettingsProvider amount re-formatting', () => {
@@ -298,20 +314,18 @@ describe('SettingsProvider amount re-formatting', () => {
     expect(api.amount).toBe('0,12345678');
     act(() => api.setBase('XAU'));
     expect(api.amount).toBe('0,12');
-    act(() => api.setAmount('1,2345'));
+    // g -> oz converts the quantity (1,23 g = 0,040 oz with the oz input decimals, 3).
+    act(() => api.setAmount('1,23'));
     act(() => api.setMetalUnit('oz'));
-    expect(api.amount).toBe('1,234');
-    act(() => api.setAmount('1,2345'));
-    act(() => api.setMetalUnit('kg'));
-    expect(api.amount).toBe('1,234');
+    expect(api.amount).toBe('0,040');
   });
 
-  it('re-formats when the metal unit changes while the base is a metal', () => {
+  it('converts the quantity when the metal unit changes while the base is a metal', () => {
     renderProvider({ items: ['EUR', 'XAU'], base: 'XAU', amount: '1,234', metalUnit: 'oz' });
     act(() => api.setMetalUnit('kg'));
-    expect(api.amount).toBe('1,234');
+    expect(api.amount).toBe('0,038');
     act(() => api.setMetalUnit('g'));
-    expect(api.amount).toBe('1,23');
+    expect(api.amount).toBe('38,00');
   });
 
   it('leaves the amount alone when the unit changes and the base is not a metal', () => {
@@ -326,42 +340,6 @@ describe('SettingsProvider amount re-formatting', () => {
     act(() => api.moveItem('JPY', 'EUR'));
     act(() => api.removeItem('EUR'));
     expect(api).toMatchObject({ items: ['JPY', 'USD'], base: 'JPY', amount: '9' });
-  });
-});
-
-describe('compatibility aliases for the current UI (Task 18 removes them)', () => {
-  it('currencies are the fiat items in list order', () => {
-    renderProvider({ items: ['XAU', 'EUR', 'BTC', 'USD', 'GBP'] });
-    expect(api.currencies).toEqual(['EUR', 'USD', 'GBP']);
-  });
-
-  it('currencies keep their reference while the list is unchanged', () => {
-    renderProvider();
-    const before = api.currencies;
-    act(() => api.setAmount('12'));
-    expect(api.currencies).toBe(before);
-  });
-
-  it('addCurrency, moveCurrency delegate to the item setters', () => {
-    renderProvider();
-    act(() => api.addCurrency('gbp'));
-    expect(api.items).toEqual([...DEFAULT_ITEMS, 'GBP']);
-    act(() => api.moveCurrency('GBP', 'USD'));
-    expect(api.items).toEqual(['EUR', 'GBP', 'USD', ...ASSETS]);
-    expect(api.currencies).toEqual(['EUR', 'GBP', 'USD']);
-  });
-
-  it('removeCurrency keeps at least 2 fiat items and ignores assets', () => {
-    renderProvider();
-    act(() => api.removeCurrency('USD'));
-    expect(api.items).toEqual(DEFAULT_ITEMS);
-    act(() => api.removeCurrency('XAU'));
-    expect(api.items).toEqual(DEFAULT_ITEMS);
-    act(() => api.addCurrency('GBP'));
-    act(() => api.setBase('USD'));
-    act(() => api.removeCurrency('usd'));
-    expect(api).toMatchObject({ items: ['EUR', ...ASSETS, 'GBP'], base: 'EUR' });
-    expect(api.currencies).toEqual(['EUR', 'GBP']);
   });
 });
 

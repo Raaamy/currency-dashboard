@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { ConverterCard } from '@/components/Converter/ConverterCard';
 import type { Rates } from '@/data';
 import { getCurrency, POPULAR } from '@/lib/currencies';
 import { AppProviders } from '@/state/AppProviders';
-import type { Settings } from '@/state/SettingsContext';
+import { useSettings, type Settings } from '@/state/SettingsContext';
+import { ItemPicker } from './ItemPicker';
 import { installDialogPolyfill } from './testDialog';
 
 const RATES: Rates = {
@@ -28,13 +29,28 @@ beforeAll(() => {
   installDialogPolyfill();
 });
 
+/** The picker with an opener and the current item list (`data-testid="items"`). */
+function Harness() {
+  const [open, setOpen] = useState(false);
+  const { items } = useSettings();
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        Add currency or asset
+      </button>
+      <output data-testid="items">{items.join(',')}</output>
+      <ItemPicker open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
 function renderCard(settings: Partial<Settings> = {}, rates: Rates | null = RATES) {
   return render(
     <AppProviders
       initialSettings={{ items: ['EUR', 'USD'], base: 'EUR', amount: '', ...settings }}
       initialData={{ rates }}
     >
-      <ConverterCard />
+      <Harness />
     </AppProviders>,
   );
 }
@@ -43,18 +59,12 @@ const label = (code: string) => `${code} ${getCurrency(code).name}`;
 
 const dialogElement = () => document.querySelector('dialog') as HTMLDialogElement;
 
-/** Codes of the converter's own rows (the dialog has lists too); the add row has no label. */
-function converterRows(): string[] {
-  const section = screen.getByRole('heading', { name: 'Convert' }).closest('section')!;
-  const list = section.querySelector(':scope > ul')!;
-  return Array.from(list.querySelectorAll(':scope > li'))
-    .map((li) => li.querySelector('[aria-label]')?.getAttribute('aria-label')?.slice(0, 3) ?? '')
-    .filter(Boolean);
-}
+/** The chosen items, in order. */
+const converterRows = (): string[] => screen.getByTestId('items').textContent!.split(',');
 
 function openPicker() {
-  fireEvent.click(screen.getByRole('button', { name: 'Add currency' }));
-  return screen.getByRole('dialog', { name: 'Add currency' });
+  fireEvent.click(screen.getByRole('button', { name: 'Add currency or asset' }));
+  return screen.getByRole('dialog', { name: 'Add currency or asset' });
 }
 
 /** Ends the exit transition (jsdom never fires `transitionend` on its own). */
@@ -63,12 +73,14 @@ const endTransition = () => fireEvent.transitionEnd(dialogElement());
 const item = (dialog: HTMLElement, code: string) =>
   within(dialog).getByRole('button', { name: label(code) });
 
-describe('CurrencyPicker', () => {
-  it('opens from "Add currency" and adds a currency; the sheet stays open', () => {
+describe('ItemPicker', () => {
+  it('opens from "Add currency or asset" and adds a currency; the sheet stays open', () => {
     renderCard();
     const dialog = openPicker();
     expect(dialogElement()).toHaveAttribute('open');
-    expect(within(dialog).getByRole('heading', { name: 'Add currency' })).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('heading', { name: 'Add currency or asset' }),
+    ).toBeInTheDocument();
 
     const chf = item(dialog, 'CHF');
     expect(chf).toHaveAttribute('aria-pressed', 'false');
@@ -80,6 +92,51 @@ describe('CurrencyPicker', () => {
 
     fireEvent.click(item(dialog, 'JPY'));
     expect(converterRows()).toEqual(['EUR', 'USD', 'CHF', 'JPY']);
+  });
+
+  it('lists Gold, Silver and Bitcoin first in an Assets section and adds or removes them', () => {
+    renderCard({ items: ['EUR', 'USD', 'XAU'] });
+    const dialog = openPicker();
+    const regions = within(dialog).getAllByRole('region');
+    expect(regions.map((r) => r.querySelector('h3')?.textContent)).toEqual([
+      'Assets',
+      'Popular',
+      'All currencies',
+    ]);
+    const assets = within(dialog).getByRole('region', { name: 'Assets' });
+    expect(
+      within(assets)
+        .getAllByRole('button')
+        .map((b) => b.getAttribute('aria-label')),
+    ).toEqual(['Gold XAU', 'Silver XAG', 'Bitcoin BTC']);
+    expect(within(assets).getByRole('button', { name: 'Gold XAU' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    fireEvent.click(within(assets).getByRole('button', { name: 'Bitcoin BTC' }));
+    expect(converterRows()).toEqual(['EUR', 'USD', 'XAU', 'BTC']);
+    fireEvent.click(within(assets).getByRole('button', { name: 'Gold XAU' }));
+    expect(converterRows()).toEqual(['EUR', 'USD', 'BTC']);
+  });
+
+  it('finds assets by name and code in the search', () => {
+    renderCard();
+    const dialog = openPicker();
+    const search = within(dialog).getByRole('searchbox', { name: 'Search currency' });
+    fireEvent.change(search, { target: { value: 'gold' } });
+    expect(
+      within(dialog)
+        .getAllByRole('button', { name: / / })
+        .map((b) => b.getAttribute('aria-label')),
+    ).toEqual(['Gold XAU']);
+    fireEvent.change(search, { target: { value: 'btc' } });
+    expect(within(dialog).getByRole('button', { name: 'Bitcoin BTC' })).toBeInTheDocument();
+  });
+
+  it('never lists an asset id among the currencies', () => {
+    renderCard({}, { ...RATES, rates: { ...RATES.rates, XAU: 0.0003 } });
+    const dialog = openPicker();
+    expect(within(dialog).getAllByRole('button', { name: /XAU/ })).toHaveLength(1);
   });
 
   it('shows the popular codes the rates table has, then the rest sorted by name', () => {
@@ -234,7 +291,7 @@ describe('CurrencyPicker', () => {
   it('does not close on a click inside the sheet', () => {
     renderCard();
     const dialog = openPicker();
-    fireEvent.pointerDown(within(dialog).getByRole('heading', { name: 'Add currency' }));
+    fireEvent.pointerDown(within(dialog).getByRole('heading', { name: 'Add currency or asset' }));
     fireEvent.click(dialogElement());
     expect(dialogElement()).toHaveAttribute('open');
   });

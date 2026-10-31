@@ -1,10 +1,10 @@
 .dot {
   display: inline-block;
   flex: none;
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--up);
+  background: var(--live);
   animation: pulse 2s var(--ease) infinite;
 }
 
@@ -15,10 +15,10 @@
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 var(--up-soft);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 35%, transparent);
   }
   70% {
-    box-shadow: 0 0 0 6px var(--up-soft);
+    box-shadow: 0 0 0 6px transparent;
   }
   100% {
     box-shadow: 0 0 0 6px transparent;

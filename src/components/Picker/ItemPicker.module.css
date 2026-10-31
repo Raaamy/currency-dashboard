@@ -1,4 +1,4 @@
-/* Currency picker (SPEC §11 "Currency picker"). Tokens only, except the SPEC backdrop. */
+/* Item picker (SPEC §11 "Currency picker", §13 "Picker"). Tokens only, except the SPEC backdrop. */
 
 /* < 640 px: bottom sheet, full width, slides up. */
 .dialog {

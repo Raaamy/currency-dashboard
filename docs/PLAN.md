@@ -189,7 +189,7 @@ on top of it (adapter: currencies = fiat items) so Task 18 starts from a green t
 Verify: unit tests (migrations v3/v4 -> v5, invariants, eurPer per unit, decimals, rate
 line direction and decimals, change from/to), lint/build/test pass.
 
-## Task 18 — "Faster at a glance" dashboard UI `[~]`  (tier: careful, deps: 17)
+## Task 18 — "Faster at a glance" dashboard UI `[x]`  (tier: careful, deps: 17)
 
 SPEC §13 "Screen": top bar with live status and metal unit toggle, convert card (wide and
 narrow forms), results grid/list with tap-to-convert, edit mode over all items with

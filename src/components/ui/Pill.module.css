@@ -1,10 +1,24 @@
+/* Change badge (SPEC §13 "Results"): md 14/700 radius 12 padding 4 10, sm 12/700 radius 8
+   padding 1 7. Colours: --up / --down / --flat on their soft backgrounds. */
 .pill {
   display: inline-block;
-  padding: 3px 9px;
-  border-radius: var(--radius-pill);
-  font: var(--font-caption);
+  font-family: var(--font-family);
   font-weight: 700;
   white-space: nowrap;
+}
+
+.md {
+  padding: 4px 10px;
+  border-radius: var(--radius-badge);
+  font-size: 14px;
+  line-height: 19px;
+}
+
+.sm {
+  padding: 1px 7px;
+  border-radius: var(--radius-badge-sm);
+  font-size: 12px;
+  line-height: 16px;
 }
 
 .up {
@@ -18,6 +32,6 @@
 }
 
 .neutral {
-  background: var(--line);
-  color: var(--text-2);
+  background: var(--flat-soft);
+  color: var(--flat);
 }

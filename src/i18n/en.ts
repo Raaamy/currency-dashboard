@@ -14,13 +14,6 @@ export const en = {
   exchangeRate: 'Exchange rate',
   sinceYesterday: 'vs yesterday',
   refresh: 'Refresh',
-  'cur.EUR': 'Euro',
-  'cur.USD': 'US dollar',
-  'cur.GBP': 'British pound',
-  'cur.AED': 'UAE dirham',
-  'asset.BTC': 'Bitcoin',
-  'asset.XAU': 'Gold',
-  'asset.XAG': 'Silver',
   // SPEC §11 "Copy (en) additions" (converter edit mode, currency picker)
   edit: 'Edit',
   done: 'Done',
@@ -53,6 +46,8 @@ export const en = {
   'unit.g': 'g',
   'unit.oz': 'oz',
   'unit.kg': 'kg',
+  // Task 18: narrow convert card title of a metal base, e.g. "Gold (g)" (design canvas)
+  nameUnit: '{name} ({unit})',
 };
 
 export type MessageKey = keyof typeof en;

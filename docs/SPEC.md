@@ -57,10 +57,13 @@ src/
   data/usePolling.ts       interval that pauses when document is hidden
   state/SettingsContext.tsx base currency, amount; persisted
   i18n/en.ts, index.ts     English copy + t() / useT()
-  components/Header/       "last updated" caption, refresh button
-  components/Converter/    ConverterCard, CurrencyRow, AmountInput
-  components/Markets/      MarketsSection, MarketTile, ChangePill, LiveDot
-  components/ui/           Card, Pill, SymbolBadge (shared primitives)
+  components/TopBar/       refresh, "Rates updated", live status, unit toggle slot
+  components/Convert/      ConvertCard, AmountInput, TapHint, UnitToggle
+  components/Results/      Results, ResultItem (card grid / list rows, tap to convert)
+  components/Edit/         EditList, EditRow (remove + dnd-kit reorder of all items)
+  components/Picker/       ItemPicker (assets, popular, all currencies; search)
+  components/ui/           SymbolBadge, ItemBadge, Pill, LiveDot, Segmented, EditButton,
+                           AddButton, useElementWidth (shared primitives)
 ```
 
 Responsibilities:
@@ -622,3 +625,15 @@ quick-amount chips (1 / 100 / 1K / 10K / 100K), and the hint under the input rea
 | assets | Assets |
 | fromPill | From |
 | unit.g / unit.oz / unit.kg | g / oz / kg |
+
+### Orchestrator decisions after review (2026-10-31)
+- Compact vs wide form: decided by the width of the two-column wrapper (< 400 px =
+  compact), because the desktop convert card is only ~340 px wide.
+- Compact form: "Edit"/"Done" sits on the same line as "Add currency or asset", below the
+  list (no separate Edit row above it); the tap hint is 11 px / tracking .04em so it fits
+  beside the `g | oz | kg` toggle on a 390 px phone.
+- Segmented track: `--seg-track` (light `rgba(43,40,36,.07)`, dark `--surface`).
+- Changing the metal unit while a metal is the base converts the typed quantity
+  (895,93 g -> 28,805 oz), so every result stays the same.
+- `parseAmount`: a lone `,` is always the decimal separator (as the input shows it), so
+  `28,805` = 28,805; a lone `.` + 3 digits after 1-3 non-zero digits stays a thousands dot.

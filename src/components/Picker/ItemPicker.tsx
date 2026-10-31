@@ -9,15 +9,16 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from 'react';
-import { SymbolBadge } from '@/components/ui/SymbolBadge';
+import { ItemBadge } from '@/components/ui/ItemBadge';
 import { availableCodes, useRates } from '@/data';
 import { useT } from '@/i18n';
-import { compareByName, getCurrency, POPULAR } from '@/lib/currencies';
-import { MIN_CURRENCIES, useSettings } from '@/state/SettingsContext';
-import styles from './CurrencyPicker.module.css';
+import { ASSET_IDS, getItem, isAsset, itemTitles } from '@/lib/assets';
+import { compareByName, POPULAR } from '@/lib/currencies';
+import { MIN_ITEMS, useSettings } from '@/state/SettingsContext';
+import styles from './ItemPicker.module.css';
 import { matchesQuery } from './search';
 
-export interface CurrencyPickerProps {
+export interface ItemPickerProps {
   open: boolean;
   onClose: () => void;
 }
@@ -86,18 +87,20 @@ function blurOnEnter(event: KeyboardEvent<HTMLInputElement>) {
 }
 
 /**
- * Currency picker (SPEC §11 "Currency picker"): a native modal `<dialog>`, bottom sheet below
- * 640 px and centred dialog from 640 px. Tapping an item adds or removes that currency (never
- * below `MIN_CURRENCIES`); the sheet stays open so several can be added.
+ * Item picker (SPEC §11 "Currency picker", §13 "Picker"): a native modal `<dialog>`, bottom
+ * sheet below 640 px and centred dialog from 640 px. Sections Assets (Gold, Silver, Bitcoin),
+ * Popular and All currencies; the search matches codes and names (asset names included).
+ * Tapping an item adds or removes it (never below `MIN_ITEMS`); the sheet stays open so several
+ * can be added.
  *
  * `open` is the source of truth. Escape (`cancel`, prevented) and backdrop taps ask the parent
  * to close; the dialog itself closes after the exit transition. The native `close` event also
  * calls `onClose` (idempotent), so state never stays open when the browser closed the dialog
  * on its own (Chrome may skip `cancel` after a prevented one).
  */
-export function CurrencyPicker({ open, onClose }: CurrencyPickerProps) {
+export function ItemPicker({ open, onClose }: ItemPickerProps) {
   const t = useT();
-  const { currencies, addCurrency, removeCurrency } = useSettings();
+  const { items, addItem, removeItem } = useSettings();
   const { data } = useRates();
   const titleId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -207,7 +210,8 @@ export function CurrencyPicker({ open, onClose }: CurrencyPickerProps) {
   };
 
   const { popular, others } = useMemo(() => {
-    const codes = data ? availableCodes(data) : [...POPULAR];
+    // The asset ids have their own section, even if a rates table lists one of them.
+    const codes = (data ? availableCodes(data) : [...POPULAR]).filter((code) => !isAsset(code));
     const set = new Set(codes);
     return {
       popular: POPULAR.filter((code) => set.has(code)),
@@ -217,37 +221,39 @@ export function CurrencyPicker({ open, onClose }: CurrencyPickerProps) {
 
   const searching = query.trim() !== '';
   const matches = searching
-    ? [...popular, ...others].filter((code) => matchesQuery(code, getCurrency(code).name, query))
+    ? [...ASSET_IDS, ...popular, ...others].filter((code) =>
+        matchesQuery(code, getItem(code).name, query),
+      )
     : [];
-  const atMinimum = currencies.length <= MIN_CURRENCIES;
+  const atMinimum = items.length <= MIN_ITEMS;
 
   const toggle = (code: string) => {
-    if (currencies.includes(code)) {
-      if (!atMinimum) removeCurrency(code);
+    if (items.includes(code)) {
+      if (!atMinimum) removeItem(code);
     } else {
-      addCurrency(code);
+      addItem(code);
     }
   };
 
   const renderItems = (codes: readonly string[]) => (
     <ul className={styles.items}>
       {codes.map((code) => {
-        const currency = getCurrency(code);
-        const chosen = currencies.includes(code);
+        const { title, subtitle } = itemTitles(code);
+        const chosen = items.includes(code);
         return (
           <li key={code}>
             <button
               type="button"
               className={styles.item}
-              aria-label={`${currency.code} ${currency.name}`}
+              aria-label={`${title} ${subtitle}`}
               aria-pressed={chosen}
               aria-disabled={chosen && atMinimum ? 'true' : undefined}
               onClick={() => toggle(code)}
             >
-              <SymbolBadge tint={currency.tint} symbol={currency.symbol} size={32} />
+              <ItemBadge code={code} size={32} />
               <span className={styles.texts}>
-                <span className={styles.code}>{currency.code}</span>
-                <span className={styles.name}>{currency.name}</span>
+                <span className={styles.code}>{title}</span>
+                <span className={styles.name}>{subtitle}</span>
               </span>
               <span className={styles.check}>{chosen ? <CheckIcon /> : null}</span>
             </button>
@@ -257,7 +263,7 @@ export function CurrencyPicker({ open, onClose }: CurrencyPickerProps) {
     </ul>
   );
 
-  const section = (key: 'popular' | 'allCurrencies', codes: readonly string[]) =>
+  const section = (key: 'assets' | 'popular' | 'allCurrencies', codes: readonly string[]) =>
     codes.length === 0 ? null : (
       <section className={styles.section} aria-labelledby={`${titleId}-${key}`}>
         <h3 id={`${titleId}-${key}`} className={styles.sectionTitle}>
@@ -280,7 +286,7 @@ export function CurrencyPicker({ open, onClose }: CurrencyPickerProps) {
           <span className={styles.handle} aria-hidden="true" />
           <div className={styles.titleRow}>
             <h2 id={titleId} className={styles.title}>
-              {t('addCurrency')}
+              {t('addItem')}
             </h2>
             <button
               ref={closeRef}
@@ -321,6 +327,7 @@ export function CurrencyPicker({ open, onClose }: CurrencyPickerProps) {
             )
           ) : (
             <>
+              {section('assets', ASSET_IDS)}
               {section('popular', popular)}
               {section('allCurrencies', others)}
             </>

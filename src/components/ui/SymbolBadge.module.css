@@ -1,3 +1,4 @@
+/* Item badge (SPEC §13 "Colours"). Glyph sizes per badge size from the design canvas. */
 .badge {
   display: inline-flex;
   flex: none;
@@ -6,74 +7,77 @@
   border-radius: var(--radius-pill);
   color: var(--text);
   font: var(--font-display);
-  /* Glyph size per badge size (set by the .sNN classes); .small / .tiny cap it. */
   font-size: var(--glyph, 18px);
   line-height: 1;
   white-space: nowrap;
 }
 
-.s18 {
-  --glyph: 11px;
-  width: 18px;
-  height: 18px;
-}
-
-.s28 {
-  --glyph: 14px;
-  width: 28px;
-  height: 28px;
-}
-
 .s32 {
   --glyph: 16px;
+  --glyph-small: 12px;
+  --glyph-tiny: 11px;
   width: 32px;
   height: 32px;
 }
 
-.s36 {
-  width: 36px;
-  height: 36px;
-}
-
-.s38 {
-  width: 38px;
-  height: 38px;
-}
-
 .s40 {
+  --glyph: 18px;
+  --glyph-small: 12px;
+  --glyph-tiny: 11px;
   width: 40px;
   height: 40px;
 }
 
+.s44 {
+  --glyph: 20px;
+  --glyph-small: 13px;
+  --glyph-tiny: 12px;
+  width: 44px;
+  height: 44px;
+}
+
+.s52 {
+  --glyph: 24px;
+  --glyph-small: 15px;
+  --glyph-tiny: 14px;
+  width: 52px;
+  height: 52px;
+}
+
 /* Symbols of 3 characters (AED). */
 .small {
-  font-size: min(var(--glyph, 18px), 14px);
+  font-size: var(--glyph-small, 12px);
 }
 
 /* Code fallbacks (CHF) and symbols longer than 3 characters. */
 .tiny {
-  font-size: 11px;
+  font-size: var(--glyph-tiny, 11px);
 }
 
 /* `background`, not `background-color`: gold/silver tints are gradients. */
 .eur {
   background: var(--tint-eur);
+  color: var(--tint-eur-fg);
 }
 
 .usd {
   background: var(--tint-usd);
+  color: var(--tint-usd-fg);
 }
 
 .gbp {
   background: var(--tint-gbp);
+  color: var(--tint-gbp-fg);
 }
 
 .aed {
   background: var(--tint-aed);
+  color: var(--tint-aed-fg);
 }
 
 .btc {
   background: var(--tint-btc);
+  color: var(--tint-btc-fg);
 }
 
 .gold {

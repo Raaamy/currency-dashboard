@@ -51,11 +51,10 @@ svg {
   max-width: 100%;
 }
 
-/* Layout shell (SPEC §8 "Responsive / foldable"): < 900 px single column card stack,
-   16 px gutters (24 px from 640 px). */
+/* Layout shell (SPEC §13 "Layout"): top bar, then the convert card and the results in one
+   column (gap 14) below 900 px; from 900 px the card (flex 1 1 340, max 420) left and the
+   results (flex 999 1 560) right, gap 24, max-width 1200 centred. Gutters 16 / 24 from 640 px. */
 .app {
-  max-width: 1040px;
-  margin: 0 auto;
   padding-top: calc(16px + env(safe-area-inset-top));
   padding-right: calc(16px + env(safe-area-inset-right));
   padding-bottom: calc(16px + env(safe-area-inset-bottom));
@@ -63,17 +62,20 @@ svg {
 }
 
 .layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-.layout > header {
-  grid-column: 1 / -1;
+.columns {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
 }
 
-/* >= 640 px: 24 px gutters (still one column: the foldable inner screen is ~680 px) */
 @media (min-width: 640px) {
   .app {
     padding-top: calc(24px + env(safe-area-inset-top));
@@ -83,17 +85,30 @@ svg {
   }
 }
 
-/* >= 900 px: two columns 1.15fr 1fr, gap 24 (converter left, markets right) */
 @media (min-width: 900px) {
   .layout {
-    grid-template-columns: 1.15fr 1fr;
     gap: 24px;
+  }
+
+  .columns {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 24px;
+  }
+
+  .columns > :first-child {
+    flex: 1 1 340px;
+    max-width: 420px;
+  }
+
+  .columns > :last-child {
+    flex: 999 1 560px;
   }
 }
 
 /* Foldable hinge: column gap spans the fold (progressive enhancement) */
-@media (horizontal-viewport-segments: 2) {
-  .layout {
+@media (min-width: 900px) and (horizontal-viewport-segments: 2) {
+  .columns {
     column-gap: calc(env(viewport-segment-left 1 0) - env(viewport-segment-right 0 0));
   }
 }

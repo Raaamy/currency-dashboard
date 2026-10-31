@@ -10,14 +10,16 @@ import {
 } from 'react';
 import { formatAmountInput } from '@/lib/amountInput';
 import {
+  amountTextFor,
   ASSET_IDS,
   DEFAULT_ITEMS,
   getItem,
+  GRAMS_PER_UNIT,
   inputDecimals,
-  isAsset,
   METAL_UNITS,
   type MetalUnit,
 } from '@/lib/assets';
+import { parseAmount } from '@/lib/money';
 import { DEFAULT_CURRENCIES, LEGACY_CURRENCIES } from '@/lib/currencies';
 import { readJSON, writeJSON } from '@/lib/storage';
 
@@ -42,19 +44,8 @@ export interface SettingsApi extends Settings {
   removeItem: (code: string) => void;
   /** Moves `from` to the index of `to` (SPEC §12); ignored unless both are listed. Base unchanged. */
   moveItem: (from: string, to: string) => void;
-  /** Ignored for unknown units; re-formats the amount when the base is a metal. */
+  /** Ignored for unknown units; with a metal base it converts the typed quantity to the new unit. */
   setMetalUnit: (unit: MetalUnit) => void;
-  /** @deprecated Task 18 removes it: the fiat items of `items`, in list order. */
-  currencies: string[];
-  /** @deprecated Task 18 removes it: delegates to `addItem`. */
-  addCurrency: (code: string) => void;
-  /**
-   * @deprecated Task 18 removes it: `removeItem` for fiat codes, also ignored when it would
-   * leave fewer than 2 fiat items (the current converter's rows).
-   */
-  removeCurrency: (code: string) => void;
-  /** @deprecated Task 18 removes it: delegates to `moveItem`. */
-  moveCurrency: (from: string, to: string) => void;
 }
 
 const STORAGE_KEY = 'settings';
@@ -67,9 +58,6 @@ const STORAGE_KEY = 'settings';
 export const SETTINGS_VERSION = 5;
 
 export const MIN_ITEMS = 2;
-
-/** @deprecated Task 18 removes it: the minimum number of fiat rows of the current converter. */
-export const MIN_CURRENCIES = 2;
 
 const DEFAULT_METAL_UNIT: MetalUnit = 'g';
 
@@ -248,24 +236,13 @@ export function SettingsProvider({ children, initialSettings }: SettingsProvider
     (unit: MetalUnit) =>
       update((s) => {
         const u = toMetalUnit(unit);
-        return u && u !== s.metalUnit ? { metalUnit: u } : null;
-      }),
-    [update],
-  );
-
-  // Compatibility for the current (pre-Task 18) UI, which only renders fiat rows.
-  const currencies = useMemo(
-    () => settings.items.filter((code) => !isAsset(code)),
-    [settings.items],
-  );
-  const removeCurrency = useCallback(
-    (code: string) =>
-      update((s) => {
-        const c = toCode(code);
-        const fiat = s.items.filter((x) => !isAsset(x));
-        if (!c || !fiat.includes(c) || fiat.length <= MIN_CURRENCIES) return null;
-        if (s.items.length <= MIN_ITEMS) return null;
-        return { items: s.items.filter((x) => x !== c) };
+        if (!u || u === s.metalUnit) return null;
+        // With a metal base the typed quantity is converted (895,93 g -> 28,80 oz), so the
+        // amount of metal, and every result, stays the same.
+        const value = isMetal(s.base) ? parseAmount(s.amount) : null;
+        if (value === null) return { metalUnit: u };
+        const converted = (value * GRAMS_PER_UNIT[s.metalUnit]) / GRAMS_PER_UNIT[u];
+        return { metalUnit: u, amount: amountTextFor(converted, s.base, u) };
       }),
     [update],
   );
@@ -279,22 +256,8 @@ export function SettingsProvider({ children, initialSettings }: SettingsProvider
       removeItem,
       moveItem,
       setMetalUnit,
-      currencies,
-      addCurrency: addItem,
-      removeCurrency,
-      moveCurrency: moveItem,
     }),
-    [
-      settings,
-      setBase,
-      setAmount,
-      addItem,
-      removeItem,
-      moveItem,
-      setMetalUnit,
-      currencies,
-      removeCurrency,
-    ],
+    [settings, setBase, setAmount, addItem, removeItem, moveItem, setMetalUnit],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

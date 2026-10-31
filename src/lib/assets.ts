@@ -4,7 +4,8 @@
  * labels, the rate line and its daily change. Pure, no React/DOM.
  */
 import { getCurrency, type CurrencyTint } from './currencies';
-import { convert, DASH, formatNumber, OZ_IN_GRAMS, rateChangePct } from './money';
+import { formatAmountInput } from './amountInput';
+import { convert, DASH, formatNumber, formatPercent, OZ_IN_GRAMS, rateChangePct } from './money';
 
 /** Unit the metals are shown and typed in (`settings.metalUnit`). */
 export type MetalUnit = 'g' | 'oz' | 'kg';
@@ -196,4 +197,43 @@ export function formatItemAmount(value: number, code: string, unit: MetalUnit): 
   if (!Number.isFinite(value)) return DASH;
   const d = displayDecimals(code, unit, value);
   return formatNumber(value, { minDecimals: d, maxDecimals: d });
+}
+
+/**
+ * Amount text for the input when a result becomes the base (SPEC §13 "tap to convert"): the
+ * value in nl-NL with the new base's `inputDecimals` (fixed), run through `formatAmountInput`
+ * so it is exactly what typing it would give. Empty when the value is not finite.
+ */
+export function amountTextFor(value: number, code: string, unit: MetalUnit): string {
+  if (!Number.isFinite(value)) return '';
+  const d = inputDecimals(code, unit);
+  const text = formatNumber(Math.abs(value), { minDecimals: d, maxDecimals: d });
+  return formatAmountInput(text, text.length, d).text;
+}
+
+export interface ItemTitles {
+  /** Bold line: the code for fiat, the name for assets (`USD`, `Gold`). */
+  title: string;
+  /** Second line: the name for fiat, the code for assets (`US Dollar`, `XAU`). */
+  subtitle: string;
+}
+
+/** Title and subtitle of an item (SPEC §13): fiat code over name, assets name over code. */
+export function itemTitles(code: string): ItemTitles {
+  const item = getItem(code);
+  return item.kind === 'fiat'
+    ? { title: item.code, subtitle: item.name }
+    : { title: item.name, subtitle: item.code };
+}
+
+export type ChangeVariant = 'up' | 'down' | 'neutral';
+
+/**
+ * Change badge (SPEC §13): the % rounded to 1 decimal, `0,0%` neutral, > 0 up, < 0 down; the
+ * text from `formatPercent` of the rounded value (`+1,2%`, `−0,9%`).
+ */
+export function changeBadge(pct: number): { text: string; variant: ChangeVariant } {
+  const r = Math.round(pct * 10) / 10;
+  const variant: ChangeVariant = r > 0 ? 'up' : r < 0 ? 'down' : 'neutral';
+  return { text: formatPercent(r), variant };
 }

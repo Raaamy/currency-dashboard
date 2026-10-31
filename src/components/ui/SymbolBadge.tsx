@@ -1,9 +1,9 @@
-import type { CurrencyTint } from '@/lib/currencies';
+import type { ItemTint } from '@/lib/assets';
 import styles from './SymbolBadge.module.css';
 
-export type BadgeTint = CurrencyTint | 'btc' | 'gold' | 'silver';
+export type BadgeTint = ItemTint;
 
-export type BadgeSize = 18 | 28 | 32 | 36 | 38 | 40;
+export type BadgeSize = 32 | 40 | 44 | 52;
 
 export interface SymbolBadgeProps {
   tint: BadgeTint;
@@ -12,19 +12,17 @@ export interface SymbolBadgeProps {
   size?: BadgeSize;
   /**
    * Smaller glyph for long symbols; defaults to `symbol.length > 2` (AED `د.إ`). Symbols longer
-   * than 3 characters and 3-letter code fallbacks (`CHF`) always use the tiny 11 px glyph.
+   * than 3 characters and 3-letter code fallbacks (`CHF`) always use the tiny glyph.
    */
   small?: boolean;
   className?: string;
 }
 
 const SIZE_CLASS: Record<BadgeSize, string | undefined> = {
-  18: styles.s18,
-  28: styles.s28,
   32: styles.s32,
-  36: styles.s36,
-  38: styles.s38,
   40: styles.s40,
+  44: styles.s44,
+  52: styles.s52,
 };
 
 /** CSS class names cannot start with a digit: `--tint-1` is the `.tint1` class. */
@@ -33,13 +31,15 @@ const tintClass = (tint: BadgeTint): string | undefined =>
 
 const isCodeFallback = (symbol: string): boolean => /^[A-Z]{3}$/.test(symbol);
 
-/** Tinted circle with a currency/asset glyph. Decorative: the row names the currency. */
+/**
+ * Tinted circle with a currency/asset glyph (SPEC §13 "Colours": `--tint-x` background with the
+ * `--tint-x-fg` glyph colour; radial gold/silver). Decorative: the row names the item.
+ */
 export function SymbolBadge({ tint, symbol, size = 40, small, className }: SymbolBadgeProps) {
-  // An 18 px badge cannot hold a 3-letter code: show its first letter (CHF -> C).
-  const glyph = size === 18 && symbol !== undefined && isCodeFallback(symbol) ? symbol[0] : symbol;
+  const glyph = symbol || undefined;
   const isTiny =
     glyph !== undefined && glyph.length > 1 && (glyph.length > 3 || isCodeFallback(glyph));
-  const isSmall = !isTiny && (small ?? (symbol !== undefined && symbol.length > 2));
+  const isSmall = !isTiny && (small ?? (glyph !== undefined && glyph.length > 2));
   const classes = [
     styles.badge,
     tintClass(tint),

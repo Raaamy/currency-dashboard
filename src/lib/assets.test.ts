@@ -1,5 +1,7 @@
 import {
+  amountTextFor,
   ASSET_IDS,
+  changeBadge,
   convertItem,
   DEFAULT_ITEMS,
   displayDecimals,
@@ -10,6 +12,7 @@ import {
   inputDecimals,
   isAsset,
   itemChangePct,
+  itemTitles,
   METAL_UNITS,
   rateDecimals,
   rateLabel,
@@ -295,5 +298,57 @@ describe('formatItemAmount', () => {
   it('shows a dash when not finite', () => {
     expect(formatItemAmount(NaN, 'XAU', 'g')).toBe('—');
     expect(formatItemAmount(Infinity, 'EUR', 'g')).toBe('—');
+  });
+});
+
+describe('amountTextFor', () => {
+  it('formats the value for the input with the new base input decimals', () => {
+    expect(amountTextFor(111620, 'USD', 'g')).toBe('111.620,00');
+    expect(amountTextFor(1234567.891, 'USD', 'g')).toBe('1.234.567,89');
+    expect(amountTextFor(890.8698, 'XAU', 'g')).toBe('890,87');
+    expect(amountTextFor(28.64219, 'XAU', 'oz')).toBe('28,642');
+    expect(amountTextFor(0.89087, 'XAU', 'kg')).toBe('0,891');
+    expect(amountTextFor(1.44461333999, 'BTC', 'g')).toBe('1,44461334');
+    expect(amountTextFor(0.0000144, 'BTC', 'g')).toBe('0,00001440');
+  });
+
+  it('uses no decimals for currencies without minor units (JPY)', () => {
+    expect(amountTextFor(1234.5, 'JPY', 'g')).toBe('1.235');
+    expect(amountTextFor(12, 'JPY', 'g')).toBe('12');
+  });
+
+  it('round-trips through the amount input formatting unchanged', () => {
+    for (const [value, code] of [
+      [100000, 'EUR'],
+      [0.5, 'XAG'],
+      [12345.678, 'BTC'],
+    ] as const) {
+      const text = amountTextFor(value, code, 'g');
+      expect(text).not.toBe('');
+      expect(text).toMatch(/^[0-9.]+(,[0-9]+)?$/);
+    }
+  });
+
+  it('is empty when the value is not finite', () => {
+    expect(amountTextFor(NaN, 'USD', 'g')).toBe('');
+    expect(amountTextFor(Infinity, 'XAU', 'g')).toBe('');
+  });
+});
+
+describe('itemTitles', () => {
+  it('fiat: code over name; assets: name over code', () => {
+    expect(itemTitles('usd')).toEqual({ title: 'USD', subtitle: getItem('USD').name });
+    expect(itemTitles('XAU')).toEqual({ title: 'Gold', subtitle: 'XAU' });
+    expect(itemTitles('BTC')).toEqual({ title: 'Bitcoin', subtitle: 'BTC' });
+  });
+});
+
+describe('changeBadge', () => {
+  it('rounds to 1 decimal and picks the variant from the rounded value', () => {
+    expect(changeBadge(1.234)).toEqual({ text: '+1,2%', variant: 'up' });
+    expect(changeBadge(-0.94)).toEqual({ text: '−0,9%', variant: 'down' });
+    expect(changeBadge(0.04)).toEqual({ text: '0,0%', variant: 'neutral' });
+    expect(changeBadge(-0.05)).toEqual({ text: '0,0%', variant: 'neutral' });
+    expect(changeBadge(0)).toEqual({ text: '0,0%', variant: 'neutral' });
   });
 });

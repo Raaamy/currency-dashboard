@@ -1,0 +1,251 @@
+/* Results (SPEC §13 "Results"; sizes from the design canvas). The `results` container decides
+   the form: one list card with rows below 560 px of width, a card grid from 560 px. Each result
+   is one grid-area layout, so both forms share the DOM. Tokens only. */
+.results {
+  container: results / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* Narrow: Edit right-aligned above the list, its text in line with the row content. */
+/* Narrow: "Add currency or asset" left, "Edit"/"Done" right, below the list. */
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-right: 16px;
+}
+
+/* ---- List form (< 560 px) ---- */
+.list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 6px 0;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  list-style: none;
+}
+
+.cell {
+  display: flex;
+  min-width: 0;
+}
+
+.item {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: 40px minmax(min-content, 1fr) auto;
+  grid-template-areas:
+    'icon title amount'
+    'icon rate badge';
+  align-content: center;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 2px;
+  min-width: 0;
+  min-height: 64px;
+  margin: 0;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-width: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-family);
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background-color var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+
+@media (hover: hover) {
+  .item:hover {
+    background-color: var(--line);
+  }
+}
+
+.item:active {
+  background-color: var(--line);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.item .icon {
+  --glyph: 18px;
+  --glyph-small: 12px;
+  --glyph-tiny: 11px;
+  grid-area: icon;
+  width: 40px;
+  height: 40px;
+}
+
+.title {
+  grid-area: title;
+  align-self: end;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+
+.name {
+  display: none;
+}
+
+.rate {
+  grid-area: rate;
+  align-self: start;
+  min-width: 0;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 16px;
+  overflow-wrap: anywhere;
+}
+
+.amount {
+  grid-area: amount;
+  align-self: end;
+  justify-self: end;
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.value {
+  white-space: nowrap;
+}
+
+.unit {
+  color: var(--text-2);
+  font-size: 13px;
+}
+
+.item .badge {
+  grid-area: badge;
+  align-self: start;
+  justify-self: end;
+  margin-top: 1px;
+  padding: 1px 7px;
+  border-radius: var(--radius-badge-sm);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* ---- Card grid (>= 560 px) ---- */
+@container results (min-width: 560px) {
+  .list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+  }
+
+  .item {
+    grid-template-columns: 44px minmax(min-content, 1fr) auto;
+    grid-template-areas:
+      'icon title badge'
+      'icon name badge'
+      'amount amount amount'
+      'rate rate rate';
+    align-content: start;
+    row-gap: 0;
+    min-height: 168px;
+    padding: 20px;
+    border-width: 1px;
+    border-color: var(--line);
+    border-radius: var(--radius-card);
+    background: var(--surface);
+  }
+
+  @media (hover: hover) {
+    .item:hover {
+      border-color: color-mix(in srgb, var(--text-2) 30%, transparent);
+      background-color: var(--surface);
+    }
+  }
+
+  .item:active {
+    border-color: color-mix(in srgb, var(--text-2) 30%, transparent);
+    background-color: var(--surface);
+  }
+
+  .item .icon {
+    --glyph: 20px;
+    --glyph-small: 13px;
+    --glyph-tiny: 12px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .title {
+    font-size: 17px;
+    line-height: 23px;
+  }
+
+  .name {
+    display: block;
+    grid-area: name;
+    align-self: start;
+    min-width: 0;
+    color: var(--text-2);
+    font-size: 13px;
+    line-height: 18px;
+    overflow-wrap: anywhere;
+  }
+
+  .item .badge {
+    align-self: center;
+    margin-top: 0;
+    padding: 4px 10px;
+    border-radius: var(--radius-badge);
+    font-size: 14px;
+    line-height: 19px;
+  }
+
+  .amount {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-self: start;
+    column-gap: 6px;
+    margin-top: 14px;
+    font-size: 30px;
+    line-height: 38px;
+    letter-spacing: -0.01em;
+    text-align: left;
+  }
+
+  .value {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .unit {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .rate {
+    margin-top: 14px;
+    font-size: 14px;
+    line-height: 20px;
+  }
+}

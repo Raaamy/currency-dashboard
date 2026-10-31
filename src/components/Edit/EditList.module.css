@@ -1,0 +1,129 @@
+/* Edit mode list (SPEC §13 "Edit mode", §12): the list card of the narrow results, at every
+   width. Row: [remove] · badge · title + name · [From] · drag handle. Tokens only. */
+.list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 6px 0;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  list-style: none;
+}
+
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  min-height: 64px;
+  padding: 10px 16px;
+  background-color: transparent;
+  transition:
+    background-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.texts {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.title {
+  font-family: var(--font-family);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+
+.subtitle {
+  color: var(--text-2);
+  font-family: var(--font-family);
+  font-size: 13px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+
+.from {
+  flex: none;
+}
+
+/* 22 px circle with a 44 px hit area that spills into the row padding and the gap. */
+.remove {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: -11px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  appearance: none;
+}
+
+.remove:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.removeCircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+  background: var(--down);
+  /* White in light mode; dark text on the light rose in dark mode (no white token). */
+  color: var(--surface);
+  transition: transform var(--dur) var(--ease);
+}
+
+.remove:active .removeCircle {
+  transform: scale(0.9);
+}
+
+/* Drag handle (SPEC §12): 18 px grip with a 44 px hit area spilling into the row padding.
+   Only the handle blocks touch panning, so the page still scrolls from the rest of the row. */
+.handle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: -10px -13px -10px -13px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-2);
+  cursor: grab;
+  touch-action: none;
+  appearance: none;
+}
+
+.handle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* The row being dragged lifts above the others (SPEC §12). */
+.dragging {
+  z-index: 1;
+  background-color: var(--surface);
+  box-shadow: var(--shadow-card);
+  scale: 1.02;
+}
+
+.dragging .handle {
+  cursor: grabbing;
+}

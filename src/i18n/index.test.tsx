@@ -5,8 +5,7 @@ import { t, useT, type MessageKey } from './index';
 describe('t()', () => {
   it('returns the English copy', () => {
     expect(t('convert')).toBe('Convert');
-    expect(t('asset.XAU')).toBe('Gold');
-    expect(t('cur.USD')).toBe('US dollar');
+    expect(t('nameUnit', { name: 'Gold', unit: 'g' })).toBe('Gold (g)');
     expect(t('addCurrency')).toBe('Add currency');
     expect(t('removeCurrency', { code: 'GBP' })).toBe('Remove GBP');
     expect(t('reorder', { code: 'USD' })).toBe('Reorder USD');
@@ -27,8 +26,8 @@ describe('t()', () => {
     expect(t('no.such.key' as MessageKey)).toBe('no.such.key');
   });
 
-  it('has exactly the SPEC §8, §11, §12 and §13 keys', () => {
-    expect(Object.keys(en)).toHaveLength(50);
+  it('has exactly the SPEC §8, §11, §12 and §13 keys (names come from the registry)', () => {
+    expect(Object.keys(en)).toHaveLength(44);
     expect(en).toMatchObject({
       convertFrom: 'Convert from',
       amountIn: 'Amount in {unit}',
@@ -68,7 +67,16 @@ describe('t()', () => {
     ]) {
       expect(en).toHaveProperty(key);
     }
-    for (const removed of ['settings', 'appearance', 'theme.dark', 'lang.nl']) {
+    for (const removed of [
+      'settings',
+      'appearance',
+      'theme.dark',
+      'lang.nl',
+      'cur.EUR',
+      'cur.USD',
+      'asset.XAU',
+      'asset.BTC',
+    ]) {
       expect(en).not.toHaveProperty(removed);
     }
   });

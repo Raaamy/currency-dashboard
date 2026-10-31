@@ -1,0 +1,70 @@
+/* Segmented control (SPEC §13 "Top bar" / narrow hint line; sizes from the design canvas).
+   Track --surface, checked segment --seg-active (+ --seg-shadow in light). Each segment has a
+   44 px tall hit area (::before) without changing its visual height. */
+.track {
+  display: inline-flex;
+  flex: none;
+  background: var(--seg-track);
+}
+
+.md {
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-seg);
+}
+
+.sm {
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-seg-sm);
+}
+
+.item {
+  position: relative;
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font-family: var(--font-family);
+  font-weight: 700;
+  cursor: pointer;
+  appearance: none;
+  transition:
+    background-color var(--dur) var(--ease),
+    color var(--dur) var(--ease);
+}
+
+.item::before {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
+.md .item {
+  min-width: 52px;
+  height: 36px;
+  border-radius: var(--radius-seg-item);
+  font-size: 15px;
+}
+
+/* 44 px wide (the canvas has 36) so every segment meets the 44 px touch target. */
+.sm .item {
+  min-width: 44px;
+  height: 30px;
+  border-radius: var(--radius-seg-item-sm);
+  font-size: 13px;
+}
+
+.checked {
+  background: var(--seg-active);
+  color: var(--input-text);
+  box-shadow: var(--seg-shadow);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}

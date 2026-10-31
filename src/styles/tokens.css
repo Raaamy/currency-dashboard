@@ -28,6 +28,8 @@
   --input-border: color-mix(in srgb, var(--accent) 45%, transparent);
   --input-text: var(--text);
   --seg-active: var(--surface);
+  /* Segmented track: a light grey wash in light (white on white was invisible). */
+  --seg-track: rgba(43, 40, 36, 0.07);
 
   /* Badge tints */
   --tint-eur: #e7ecf8;
@@ -55,7 +57,19 @@
   --radius-card: 24px;
   --radius-row: 16px;
   --radius-pill: 999px;
+  /* SPEC §13 "Screen" radii: convert card (wide), amount input (wide), change badges,
+     segmented control (wide / narrow track and segments) */
+  --radius-hero: 28px;
+  --radius-input: 18px;
+  --radius-badge: 12px;
+  --radius-badge-sm: 8px;
+  --radius-seg: 14px;
+  --radius-seg-sm: 12px;
+  --radius-seg-item: 10px;
+  --radius-seg-item-sm: 9px;
   --shadow-card: 0 10px 30px rgba(43, 40, 36, 0.06);
+  /* SPEC §13 "Colours" light: the active segment is --surface with --shadow-card at half strength */
+  --seg-shadow: 0 10px 30px rgba(43, 40, 36, 0.03);
 
   /* Type scale: size / line-height / weight */
   --font-family: 'Nunito Variable', system-ui, sans-serif;
@@ -98,6 +112,7 @@
     --input-border: #8a6a48;
     --input-text: #fbf7f2;
     --seg-active: #4a4440;
+    --seg-track: var(--surface);
 
     --tint-eur: #2f3a5c;
     --tint-usd: #264536;
@@ -119,5 +134,6 @@
     --tint-6: #312e2a;
 
     --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.35);
+    --seg-shadow: none;
   }
 }

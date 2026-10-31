@@ -63,6 +63,17 @@ describe('parseAmount', () => {
     expect(parseAmount(input)).toBeCloseTo(expected, 10);
   });
 
+  it.each([
+    ['1,234', 1.234],
+    ['28,805', 28.805],
+    ['999,000', 999],
+  ])(
+    'reads a single comma as the decimal separator, as the input shows it: %j -> %d',
+    (input, expected) => {
+      expect(parseAmount(input)).toBe(expected);
+    },
+  );
+
   it.each(['', '   ', 'abc', '€', ',', '.', '-5', '\u22125', '-1,5', '1,2,3.4.5,6'])(
     'rejects %j',
     (input) => {
@@ -72,16 +83,12 @@ describe('parseAmount', () => {
 
   it.each([
     ['1.234', 1234],
-    ['1,234', 1234],
     ['12.500', 12500],
-    ['999,000', 999000],
+    ['999.000', 999000],
     ['€ 1.234', 1234],
-  ])(
-    'reads a single separator before exactly 3 digits as thousands: %j -> %d',
-    (input, expected) => {
-      expect(parseAmount(input)).toBe(expected);
-    },
-  );
+  ])('reads a single dot before exactly 3 digits as thousands: %j -> %d', (input, expected) => {
+    expect(parseAmount(input)).toBe(expected);
+  });
 
   it.each([
     ['1,5', 1.5],

@@ -1,0 +1,20 @@
+/* SPEC §13 narrow layout: hint line under the convert card (12 px, tracking .08em). */
+.line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 0 4px;
+}
+
+.text {
+  min-width: 0;
+  color: var(--text-2);
+  font-family: var(--font-family);
+  /* 11 px / .04em so the hint fits beside the g | oz | kg toggle on a 390 px phone. */
+  font-size: 11px;
+  line-height: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

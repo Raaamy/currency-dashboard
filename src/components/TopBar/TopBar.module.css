@@ -1,0 +1,125 @@
+/* Top bar (SPEC §13 "Top bar"). Wide: refresh on --surface, two text lines, unit toggle right.
+   Narrow: transparent refresh, one caption, the live status at the far right. */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.compact {
+  flex-wrap: nowrap;
+  gap: 12px;
+}
+
+.compact .left {
+  gap: 8px;
+}
+
+.refresh {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text-2);
+  cursor: pointer;
+  appearance: none;
+  transition: background-color var(--dur) var(--ease);
+}
+
+.compact .refresh {
+  margin-left: -10px;
+  background: transparent;
+}
+
+@media (hover: hover) {
+  .refresh:hover {
+    background-color: var(--line);
+  }
+}
+
+.refresh:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.icon {
+  display: inline-flex;
+}
+
+.spin svg {
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.texts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.updated {
+  min-width: 0;
+  color: var(--text);
+  font-family: var(--font-family);
+  font-size: 15px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.compact .updated {
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.status {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  color: var(--live-text);
+  font-family: var(--font-family);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.stale {
+  color: var(--text-2);
+}
+
+.right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.metalsIn {
+  color: var(--text-2);
+  font-family: var(--font-family);
+  font-size: 14px;
+  line-height: 19px;
+}
