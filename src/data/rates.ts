@@ -54,7 +54,7 @@ export async function fetchRates(fetchImpl?: FetchLike): Promise<Rates> {
   return { base: 'EUR', rates, fetchedAt: Date.now(), publishedAt: published * 1000 };
 }
 
-function isRates(value: unknown): value is Rates {
+export function isRates(value: unknown): value is Rates {
   if (!isRecord(value) || value.base !== 'EUR' || !isRecord(value.rates)) return false;
   if (typeof value.fetchedAt !== 'number' || typeof value.publishedAt !== 'number') return false;
   // Any number of codes; at least EUR (= 1) and USD.

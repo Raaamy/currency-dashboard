@@ -198,3 +198,10 @@ and old converter rows. Verify: component tests (tap Gold makes Gold the base wi
 right amount; unit toggle changes metal amounts and rate lines; edit remove/reorder; picker
 adds Bitcoin), no-truncation script at the six reference viewports, side-by-side visual
 check against the canvas artboards in dark at 1280 and 390, lint/build/test pass.
+
+## Task 19 — Live fiat rates `[x]`  (tier: medium, deps: 18)
+
+SPEC §14: `src/data/liveRates.ts` (CoinGecko exchange_rates -> EUR table, cache,
+`mergeRates`), polled with the markets in `DataContext`; `useRates()` returns the merged
+table. Verify: unit tests (conversion, fiat only, shape errors, merge rules), provider tests
+(overlay, failed live call keeps daily in charge), lint/build/test pass, browser check.

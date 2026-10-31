@@ -31,6 +31,7 @@ One line per entry: `path — what / when to touch`.
 - `src/i18n/index.ts` — `t(key, params)` and `useT()` (returns `t`) (+ `index.test.tsx`)
 - `src/data/http.ts` — the only `fetch` caller: `fetchJson` with 8 s AbortController timeout, `FetchError`, shape guards
 - `src/data/rates.ts` — open.er-api fetch (keeps every code, needs EUR + USD), `wissel.rates` cache, `isFresh` (6 h), cache-aware `getRates`, `availableCodes` (+ `rates.test.ts`)
+- `src/data/liveRates.ts` — live fiat rates from CoinGecko exchange_rates (EUR table), `wissel.liveRates` cache, `mergeRates` over the daily table (+ `liveRates.test.ts`)
 - `src/data/markets.ts` — BTC (CoinGecko -> Coinbase), XAU/XAG (gold-api), `fetchMarkets`, `wissel.markets` cache (+ `markets.test.ts`)
 - `src/data/history.ts` — daily EUR snapshots (currency-api: jsDelivr -> pages.dev), latest + previous day (-1..-3), every 3-letter lower-case key, `wissel.history` cache, cache-aware `getHistory` (+ `history.test.ts`)
 - `src/data/usePolling.ts` — interval hook: runs on mount, pauses while hidden, runs again on visible (+ `usePolling.test.ts`)

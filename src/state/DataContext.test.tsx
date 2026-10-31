@@ -1,7 +1,7 @@
 import { act, render, waitFor } from '@testing-library/react';
 import { saveQuotes } from '@/data/markets';
 import { RATES_MAX_AGE_MS, saveRates, type Rates } from '@/data/rates';
-import { ER_API_BODY, mockFetch } from '@/test/mockFetch';
+import { ER_API_BODY, EXCHANGE_RATES_BODY, mockFetch } from '@/test/mockFetch';
 import { AppProviders } from './AppProviders';
 import type { History } from '@/data/history';
 import {
@@ -28,7 +28,8 @@ function Probe() {
 
 const SOURCE_ROUTES = {
   'open.er-api.com': { body: ER_API_BODY },
-  coingecko: { body: { bitcoin: { usd: 67000, usd_24h_change: 1.5 } } },
+  'simple/price': { body: { bitcoin: { usd: 67000, usd_24h_change: 1.5 } } },
+  exchange_rates: { body: EXCHANGE_RATES_BODY },
   '/XAU': { body: { price: 4000, updatedAt: '2026-10-29T11:59:00Z' } },
   '/XAG': { body: { price: 48, updatedAt: '2026-10-29T11:59:00Z' } },
 };
@@ -64,6 +65,9 @@ const cached = (ageMs: number): Rates => ({
   fetchedAt: Date.now() - ageMs,
   publishedAt: Date.now() - ageMs,
 });
+
+/** USD per EUR from EXCHANGE_RATES_BODY (70000 / 60000). */
+const LIVE_USD = 70000 / 60000;
 
 const calledUrls = (fn: ReturnType<typeof mockFetch>) => fn.mock.calls.map((c) => c[0]);
 
@@ -102,12 +106,14 @@ describe('DataProvider', () => {
     expect(rates.data).toBeNull();
     await waitFor(() => expect(rates.status).toBe('ok'));
     await waitFor(() => expect(markets.status).toBe('ok'));
-    expect(rates.data?.rates.USD).toBe(1.1638);
+    await waitFor(() => expect(rates.data?.rates.JPY).toBe(176.9));
+    expect(rates.data?.rates.USD).toBe(LIVE_USD);
     expect(Object.keys(markets.data).sort()).toEqual(['BTC', 'XAG', 'XAU']);
     expect(markets.lastRefresh).not.toBeNull();
     expect(localStorage.getItem('wissel.rates')).not.toBeNull();
     expect(localStorage.getItem('wissel.markets')).not.toBeNull();
-    expect(calledUrls(fetchMock).filter((u) => !isHistoryUrl(u))).toHaveLength(4);
+    expect(localStorage.getItem('wissel.liveRates')).not.toBeNull();
+    expect(calledUrls(fetchMock).filter((u) => !isHistoryUrl(u))).toHaveLength(5);
     await waitFor(() => expect(history.status).toBe('ok'));
     expect(history.data?.previous.rates.usd).toBe(1.1);
     expect(localStorage.getItem('wissel.history')).not.toBeNull();
@@ -129,7 +135,7 @@ describe('DataProvider', () => {
 
     await act(() => rates.refresh());
     expect(calledUrls(fetchMock).filter((u) => u.includes('er-api'))).toHaveLength(1);
-    expect(rates.data?.rates.USD).toBe(1.1638);
+    expect(rates.data?.rates.JPY).toBe(176.9);
   });
 
   it('stale caches + failing network: keeps old data, status stale with an error', async () => {
@@ -192,7 +198,8 @@ describe('DataProvider', () => {
     await waitFor(() => expect(markets.status).toBe('ok'));
     await act(() => refreshAll());
     expect(calledUrls(fetchMock).filter((u) => u.includes('er-api'))).toHaveLength(1);
-    expect(calledUrls(fetchMock).filter((u) => u.includes('coingecko'))).toHaveLength(2);
+    expect(calledUrls(fetchMock).filter((u) => u.includes('simple/price'))).toHaveLength(2);
+    expect(calledUrls(fetchMock).filter((u) => u.includes('exchange_rates'))).toHaveLength(2);
     expect(calledUrls(fetchMock).filter((u) => u.includes('@latest'))).toHaveLength(2);
   });
 
@@ -217,7 +224,39 @@ describe('DataProvider', () => {
     await waitFor(() => expect(rates.status).toBe('ok'));
     expect(history).toMatchObject({ data: null, status: 'idle' });
     expect(rates.error).toBeNull();
-    expect(rates.data?.rates.USD).toBe(1.1638);
+    await waitFor(() => expect(rates.data?.rates.JPY).toBe(176.9));
+    expect(rates.data?.rates.USD).toBe(LIVE_USD);
     expect(calledUrls(fetchMock).filter(isHistoryUrl)).toHaveLength(2);
+  });
+  it('live rates lie over the daily table and set the published time', async () => {
+    saveRates(cached(60_000));
+    vi.stubGlobal('fetch', mockFetch(ROUTES));
+    render(
+      <AppProviders>
+        <Probe />
+      </AppProviders>,
+    );
+    await waitFor(() => expect(rates.data?.rates.USD).toBe(LIVE_USD));
+    expect(rates.data?.rates.GBP).toBe(52800 / 60000);
+    expect(rates.data?.rates.CHF).toBe(0.93);
+    expect(rates.data?.publishedAt).toBeGreaterThan(Date.now() - 1000);
+    expect(rates.status).toBe('ok');
+  });
+
+  it('a failed live fetch leaves the daily rates in charge', async () => {
+    saveRates(cached(60_000));
+    const fetchMock = mockFetch({ ...ROUTES, exchange_rates: { status: 429 } });
+    vi.stubGlobal('fetch', fetchMock);
+    render(
+      <AppProviders>
+        <Probe />
+      </AppProviders>,
+    );
+    await waitFor(() => expect(markets.status).toBe('ok'));
+    await waitFor(() =>
+      expect(calledUrls(fetchMock).some((u) => u.includes('exchange_rates'))).toBe(true),
+    );
+    expect(rates).toMatchObject({ status: 'ok', error: null });
+    expect(rates.data?.rates.USD).toBe(1.1);
   });
 });

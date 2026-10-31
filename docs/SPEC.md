@@ -637,3 +637,21 @@ quick-amount chips (1 / 100 / 1K / 10K / 100K), and the hint under the input rea
   (895,93 g -> 28,805 oz), so every result stays the same.
 - `parseAmount`: a lone `,` is always the decimal separator (as the input shows it), so
   `28,805` = 28,805; a lone `.` + 3 digits after 1-3 non-zero digits stays a thousands dot.
+
+## 14. Live fiat rates (2026-10-31)
+
+open.er-api publishes once a day (00:02 UTC), so "Rates updated" showed 01:02 all day.
+Fiat rates now come live from CoinGecko, with the daily table as the base and fallback.
+
+- Source: `https://api.coingecko.com/api/v3/exchange_rates` (no key, CORS `*`): each
+  currency's price of 1 BTC; EUR rate of code X = value(X) / value(EUR). Fiat entries only
+  (~80 codes). No timestamp in the response: `publishedAt` = fetch time.
+- Polled with the markets: on mount, every 60 s while visible, on refresh. Cached in
+  `wissel.liveRates`. The daily open.er-api table keeps its 6 h cache (`wissel.rates`).
+- Merge (`mergeRates`): live rates lie over the daily table only when newer than the daily
+  publication, only for codes the daily table has (the picker list does not change), and
+  only within 10% of the daily rate (glitch guard). No daily table: the live one alone.
+- `useRates()` returns the merged table. While the last live fetch is ok the status is ok;
+  otherwise the daily source decides status and error, so a failed live call shows the
+  daily rates and time, not "Offline". "Rates updated" shows the merged `publishedAt`.
+- "vs yesterday" stays on the daily snapshots (§11).

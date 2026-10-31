@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { getHistory, isHistoryFresh, loadCachedHistory, type History } from '@/data/history';
 import { errorMessage } from '@/data/http';
+import { fetchLiveRates, loadCachedLiveRates, mergeRates, saveLiveRates } from '@/data/liveRates';
 import {
   ASSET_IDS,
   fetchMarkets,
@@ -45,6 +46,8 @@ export type HistoryApi = SourceApi<History | null>;
 /** Fixed state for tests/stories. When given, the provider never fetches or polls. */
 export interface InitialData {
   rates?: Rates | null;
+  /** Live CoinGecko rates laid over `rates` (none when omitted). */
+  liveRates?: Rates | null;
   quotes?: Partial<Quotes>;
   history?: History | null;
   ratesStatus?: SourceStatus;
@@ -78,6 +81,16 @@ function initialRates(initialData?: InitialData): SourceState<Rates | null> {
     status: data ? (isFresh(data) ? 'ok' : 'stale') : 'idle',
     error: null,
     lastRefresh: data?.fetchedAt ?? null,
+  };
+}
+
+function initialLiveRates(initialData?: InitialData): SourceState<Rates | null> {
+  const data = initialData ? (initialData.liveRates ?? null) : loadCachedLiveRates();
+  return {
+    data,
+    status: data ? (initialData ? 'ok' : 'stale') : 'idle',
+    error: null,
+    lastRefresh: initialData ? (data?.fetchedAt ?? null) : null,
   };
 }
 
@@ -127,6 +140,7 @@ export interface DataProviderProps {
 export function DataProvider({ children, initialData }: DataProviderProps) {
   const [fixed] = useState(() => initialData !== undefined);
   const [rates, setRates] = useState(() => initialRates(initialData));
+  const [live, setLive] = useState(() => initialLiveRates(initialData));
   const [markets, setMarkets] = useState(() => initialMarkets(initialData));
   const [history, setHistory] = useState(() => initialHistory(initialData));
 
@@ -144,6 +158,7 @@ export function DataProvider({ children, initialData }: DataProviderProps) {
   }, [history.data]);
 
   const ratesInFlight = useRef<Promise<void> | null>(null);
+  const liveInFlight = useRef<Promise<void> | null>(null);
   const marketsInFlight = useRef<Promise<void> | null>(null);
   const historyInFlight = useRef<Promise<void> | null>(null);
 
@@ -211,6 +226,26 @@ export function DataProvider({ children, initialData }: DataProviderProps) {
     [fixed],
   );
 
+  const runLive = useCallback((): Promise<void> => {
+    if (fixed) return Promise.resolve();
+    if (liveInFlight.current) return liveInFlight.current;
+
+    setLive((s) => ({ ...s, status: 'loading' }));
+    const promise = fetchLiveRates()
+      .then((data) => {
+        saveLiveRates(data);
+        setLive({ data, status: 'ok', error: null, lastRefresh: data.fetchedAt });
+      })
+      .catch((err: unknown) => {
+        setLive((s) => ({ ...s, status: s.data ? 'stale' : 'idle', error: errorMessage(err) }));
+      })
+      .finally(() => {
+        liveInFlight.current = null;
+      });
+    liveInFlight.current = promise;
+    return promise;
+  }, [fixed]);
+
   const runMarkets = useCallback((): Promise<void> => {
     if (fixed) return Promise.resolve();
     if (marketsInFlight.current) return marketsInFlight.current;
@@ -250,18 +285,38 @@ export function DataProvider({ children, initialData }: DataProviderProps) {
     RATES_MAX_AGE_MS,
     !fixed,
   );
-  // Markets: on mount, every 60 s while visible, immediately when visible again.
-  usePolling(runMarkets, MARKETS_POLL_MS, !fixed);
-
-  const refreshRates = useCallback(() => runRates(true), [runRates]);
-  const refreshAll = useCallback(
-    () => Promise.all([runRates(true), runHistory(true), runMarkets()]).then(() => undefined),
-    [runRates, runHistory, runMarkets],
+  // Markets and live rates: on mount, every 60 s while visible, immediately when visible again.
+  usePolling(
+    () => Promise.all([runMarkets(), runLive()]).then(() => undefined),
+    MARKETS_POLL_MS,
+    !fixed,
   );
 
+  const refreshRates = useCallback(
+    () => Promise.all([runRates(true), runLive()]).then(() => undefined),
+    [runRates, runLive],
+  );
+  const refreshAll = useCallback(
+    () =>
+      Promise.all([runRates(true), runLive(), runHistory(true), runMarkets()]).then(
+        () => undefined,
+      ),
+    [runRates, runLive, runHistory, runMarkets],
+  );
+
+  // One rates source for the app: the daily table with the live rates over it. While the live
+  // rates are ok they decide the status; otherwise the daily source does.
+  const merged = useMemo(() => mergeRates(rates.data, live.data), [rates.data, live.data]);
+  const liveOk = live.status === 'ok';
   const ratesValue = useMemo<RatesApi>(
-    () => ({ ...rates, refresh: refreshRates }),
-    [rates, refreshRates],
+    () => ({
+      data: merged,
+      status: liveOk ? 'ok' : rates.status,
+      error: liveOk ? null : rates.error,
+      lastRefresh: Math.max(rates.lastRefresh ?? 0, live.lastRefresh ?? 0) || null,
+      refresh: refreshRates,
+    }),
+    [merged, liveOk, rates.status, rates.error, rates.lastRefresh, live.lastRefresh, refreshRates],
   );
   const marketsValue = useMemo<MarketsApi>(
     () => ({ ...markets, refresh: runMarkets }),
@@ -290,7 +345,7 @@ function useRequired<T>(ctx: Context<T | null>, name: string): T {
   return value;
 }
 
-/** Fiat rates. `refresh()` fetches now, ignoring freshness. */
+/** Fiat rates (daily table with live rates over it). `refresh()` fetches both now. */
 export function useRates(): RatesApi {
   return useRequired(RatesContext, 'useRates');
 }
