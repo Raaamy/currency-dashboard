@@ -4,7 +4,7 @@ import { SettingsProvider, type Settings } from './SettingsContext';
 
 export interface AppProvidersProps {
   children: ReactNode;
-  /** Fixed currencies/base/amount (merged over defaults, normalised); storage is not read. For tests. */
+  /** Fixed items/base/amount/metalUnit (merged over defaults, normalised); storage is not read. For tests. */
   initialSettings?: Partial<Settings>;
   /** Fixed data; when given, nothing is fetched or polled. For tests. */
   initialData?: InitialData;

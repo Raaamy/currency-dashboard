@@ -37,6 +37,22 @@ export const en = {
   'dnd.moved': '{code} moved to position {pos} of {total}.',
   'dnd.dropped': '{code} dropped at position {pos} of {total}.',
   'dnd.cancelled': 'Reordering cancelled. {code} returned to position {pos}.',
+  // SPEC §13 "Copy (en) additions" ("faster at a glance" redesign: items, units, live status)
+  convertFrom: 'Convert from',
+  amountIn: 'Amount in {unit}',
+  clickHint: 'Click any result to convert from that currency or metal.',
+  tapHint: 'Tap a row to convert from it',
+  addItem: 'Add currency or asset',
+  metalsIn: 'Metals in',
+  liveAgo: 'Live · {ago}',
+  liveShort: 'Live',
+  offlineShort: 'Offline',
+  updatedShort: 'Updated {time}',
+  assets: 'Assets',
+  fromPill: 'From',
+  'unit.g': 'g',
+  'unit.oz': 'oz',
+  'unit.kg': 'kg',
 };
 
 export type MessageKey = keyof typeof en;

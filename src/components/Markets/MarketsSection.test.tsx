@@ -31,7 +31,7 @@ function renderSection(settings: Partial<Settings> = {}, data: Partial<InitialDa
   return render(
     <AppProviders
       initialSettings={{
-        currencies: [...LEGACY_CURRENCIES],
+        items: [...LEGACY_CURRENCIES],
         base: 'EUR',
         amount: '1250',
         ...settings,
@@ -165,7 +165,7 @@ describe('MarketsSection', () => {
       Array.from(li.children).map((el, i) => plain(i === 0 ? (el.lastElementChild ?? el) : el));
 
     it('shows the base header and one chip per other chosen currency, in order', () => {
-      const { container } = renderSection({ currencies: CHOSEN }, chipData());
+      const { container } = renderSection({ items: CHOSEN }, chipData());
       const rates = tile(container, 'RATES');
       expect(within(rates).getByRole('heading', { name: '1 EUR' })).toBeInTheDocument();
       expect(text(rates)).toContain(t('exchangeRate'));
@@ -178,10 +178,7 @@ describe('MarketsSection', () => {
     });
 
     it('colours the daily change by direction and labels each chip', () => {
-      const { container } = renderSection(
-        { currencies: CHOSEN },
-        chipData({ history: CHIP_HISTORY }),
-      );
+      const { container } = renderSection({ items: CHOSEN }, chipData({ history: CHIP_HISTORY }));
       const changes = chips(container).map((li) => {
         const span = li.querySelector<HTMLElement>('[data-dir]');
         return span ? { text: plain(span), dir: span.dataset.dir } : null;
@@ -200,13 +197,13 @@ describe('MarketsSection', () => {
     });
 
     it('omits the change without snapshots', () => {
-      const { container } = renderSection({ currencies: CHOSEN }, chipData({ history: null }));
+      const { container } = renderSection({ items: CHOSEN }, chipData({ history: null }));
       expect(tile(container, 'RATES').querySelectorAll('[data-dir]')).toHaveLength(0);
       expect(chips(container)[0]).toHaveAttribute('aria-label', '1 EUR = 1,1162 USD');
     });
 
     it('follows the base currency', () => {
-      const { container } = renderSection({ currencies: CHOSEN, base: 'USD' }, chipData());
+      const { container } = renderSection({ items: CHOSEN, base: 'USD' }, chipData());
       const rates = tile(container, 'RATES');
       expect(within(rates).getByRole('heading', { name: '1 USD' })).toBeInTheDocument();
       expect(chipParts(chips(container)[0])).toEqual(['EUR', formatRate(1 / 1.1162)]);
@@ -214,12 +211,12 @@ describe('MarketsSection', () => {
     });
 
     it('shows exactly one chip with the default two currencies', () => {
-      const { container } = renderSection({ currencies: ['EUR', 'USD'] }, chipData());
+      const { container } = renderSection({ items: ['EUR', 'USD'] }, chipData());
       expect(chips(container).map(chipParts)).toEqual([['USD', '1,1162']]);
     });
 
     it('shows a dash for a currency missing from the rates table', () => {
-      const { container } = renderSection({ currencies: ['EUR', 'SEK', 'USD'] }, chipData());
+      const { container } = renderSection({ items: ['EUR', 'SEK', 'USD'] }, chipData());
       expect(chips(container).map(chipParts)).toEqual([
         ['SEK', '—'],
         ['USD', '1,1162'],
@@ -227,7 +224,7 @@ describe('MarketsSection', () => {
     });
 
     it('shows dashes and shimmer without rates', () => {
-      const { container } = renderSection({ currencies: CHOSEN }, { rates: null });
+      const { container } = renderSection({ items: CHOSEN }, { rates: null });
       const rates = tile(container, 'RATES');
       expect(rates).toHaveAttribute('aria-busy', 'true');
       expect(rates.querySelector('[class*="loading"]')).not.toBeNull();

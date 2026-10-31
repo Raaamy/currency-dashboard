@@ -178,7 +178,7 @@ on a dot, paste of `1234567.891`), component tests (typing `10000` shows `10.000
 reorder moves USD below GBP and the chips follow), browser check typing and dragging at
 390 and 680 px, lint/build/test pass.
 
-## Task 17 — Items model and asset math `[~]`  (tier: careful, deps: 16)
+## Task 17 — Items model and asset math `[x]`  (tier: careful, deps: 16)
 
 SPEC §13 "Items model" and "Colours" (tokens) and the copy additions: settings v5
 (`items`, any-item `base`, `metalUnit`, migrations, invariants, `addItem`/`removeItem`/
@@ -189,7 +189,7 @@ on top of it (adapter: currencies = fiat items) so Task 18 starts from a green t
 Verify: unit tests (migrations v3/v4 -> v5, invariants, eurPer per unit, decimals, rate
 line direction and decimals, change from/to), lint/build/test pass.
 
-## Task 18 — "Faster at a glance" dashboard UI `[ ]`  (tier: careful, deps: 17)
+## Task 18 — "Faster at a glance" dashboard UI `[~]`  (tier: careful, deps: 17)
 
 SPEC §13 "Screen": top bar with live status and metal unit toggle, convert card (wide and
 narrow forms), results grid/list with tap-to-convert, edit mode over all items with

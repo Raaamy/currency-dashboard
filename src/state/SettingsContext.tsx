@@ -9,37 +9,69 @@ import {
   type ReactNode,
 } from 'react';
 import { formatAmountInput } from '@/lib/amountInput';
-import { DEFAULT_CURRENCIES, getCurrency, LEGACY_CURRENCIES } from '@/lib/currencies';
+import {
+  ASSET_IDS,
+  DEFAULT_ITEMS,
+  getItem,
+  inputDecimals,
+  isAsset,
+  METAL_UNITS,
+  type MetalUnit,
+} from '@/lib/assets';
+import { DEFAULT_CURRENCIES, LEGACY_CURRENCIES } from '@/lib/currencies';
 import { readJSON, writeJSON } from '@/lib/storage';
 
-/** SPEC §11 "Settings": the chosen currencies (insertion order), the base and the typed amount. */
+/**
+ * SPEC §13 "Items model": the user's items (fiat codes and `XAU`/`XAG`/`BTC`, display order),
+ * the base (any item), the typed amount and the unit the metals are shown in.
+ */
 export interface Settings {
-  currencies: string[];
+  items: string[];
   base: string;
   amount: string;
+  metalUnit: MetalUnit;
 }
 
 export interface SettingsApi extends Settings {
-  /** Ignored for codes that are not in `currencies`. */
+  /** Any item in `items` (case-insensitive); ignored otherwise. Re-formats the amount. */
   setBase: (base: string) => void;
   setAmount: (amount: string) => void;
-  /** Appends a code (case-insensitive); ignored when already chosen or not a 3-letter code. */
+  /** Appends an item (case-insensitive); ignored when already listed or not a 3-letter code. */
+  addItem: (code: string) => void;
+  /** Ignored when it would leave fewer than 2; removing the base makes the first item the base. */
+  removeItem: (code: string) => void;
+  /** Moves `from` to the index of `to` (SPEC §12); ignored unless both are listed. Base unchanged. */
+  moveItem: (from: string, to: string) => void;
+  /** Ignored for unknown units; re-formats the amount when the base is a metal. */
+  setMetalUnit: (unit: MetalUnit) => void;
+  /** @deprecated Task 18 removes it: the fiat items of `items`, in list order. */
+  currencies: string[];
+  /** @deprecated Task 18 removes it: delegates to `addItem`. */
   addCurrency: (code: string) => void;
-  /** Ignored when it would leave fewer than 2; removing the base makes the first one the base. */
+  /**
+   * @deprecated Task 18 removes it: `removeItem` for fiat codes, also ignored when it would
+   * leave fewer than 2 fiat items (the current converter's rows).
+   */
   removeCurrency: (code: string) => void;
-  /** Moves `from` to the index of `to` (SPEC §12); ignored unless both are chosen. Base unchanged. */
+  /** @deprecated Task 18 removes it: delegates to `moveItem`. */
   moveCurrency: (from: string, to: string) => void;
 }
 
 const STORAGE_KEY = 'settings';
 /**
- * Version written with the stored settings. v4 added `currencies`: older objects (users who
- * saw the fixed four) migrate to EUR, USD, GBP, AED and keep base and amount. v3 dropped the
- * language and theme fields.
+ * Version written with the stored settings. v5 replaced `currencies` with `items` (assets
+ * included) and added `metalUnit`: v4 objects keep their currencies and get XAU, XAG, BTC
+ * appended. v4 added `currencies`: older objects (users who saw the fixed four) migrate to
+ * EUR, USD, GBP, AED (+ the assets) and keep base and amount. v3 dropped language and theme.
  */
-export const SETTINGS_VERSION = 4;
+export const SETTINGS_VERSION = 5;
 
+export const MIN_ITEMS = 2;
+
+/** @deprecated Task 18 removes it: the minimum number of fiat rows of the current converter. */
 export const MIN_CURRENCIES = 2;
+
+const DEFAULT_METAL_UNIT: MetalUnit = 'g';
 
 const CODE_RE = /^[A-Z]{3}$/;
 
@@ -49,40 +81,57 @@ const toCode = (value: unknown): string | null => {
   return CODE_RE.test(code) ? code : null;
 };
 
+const toMetalUnit = (value: unknown): MetalUnit | null =>
+  (METAL_UNITS as readonly unknown[]).includes(value) ? (value as MetalUnit) : null;
+
 export const defaultSettings = (): Settings => ({
-  currencies: [...DEFAULT_CURRENCIES],
+  items: [...DEFAULT_ITEMS],
   base: 'EUR',
   amount: '',
+  metalUnit: DEFAULT_METAL_UNIT,
 });
 
 /**
  * Enforces the invariants on any input: upper-case 3-letter codes, no duplicates (first one
- * wins), at least 2 currencies (topped up from the defaults), `base` in `currencies` (else the
- * first one), `amount` a string. Used by load, `initialSettings` and every setter.
+ * wins), at least 2 items (topped up from the defaults), `base` in `items` (else the first
+ * one), `amount` a string, `metalUnit` one of g/oz/kg (else `g`). Used by load,
+ * `initialSettings` and every setter.
  */
 export function normalise(input: Partial<Record<keyof Settings, unknown>>): Settings {
-  const currencies: string[] = [];
-  const raw = Array.isArray(input.currencies) ? input.currencies : [];
+  const items: string[] = [];
+  const raw = Array.isArray(input.items) ? input.items : [];
   for (const value of raw) {
     const code = toCode(value);
-    if (code && !currencies.includes(code)) currencies.push(code);
+    if (code && !items.includes(code)) items.push(code);
   }
-  for (const code of DEFAULT_CURRENCIES) {
-    if (currencies.length >= MIN_CURRENCIES) break;
-    if (!currencies.includes(code)) currencies.push(code);
+  for (const code of DEFAULT_ITEMS) {
+    if (items.length >= MIN_ITEMS) break;
+    if (!items.includes(code)) items.push(code);
   }
   const base = toCode(input.base);
   return {
-    currencies,
-    base: base && currencies.includes(base) ? base : currencies[0],
+    items,
+    base: base && items.includes(base) ? base : items[0],
     amount: typeof input.amount === 'string' ? input.amount : '',
+    metalUnit: toMetalUnit(input.metalUnit) ?? DEFAULT_METAL_UNIT,
   };
 }
 
+/** The list a stored object migrates to (SPEC §13): see `SETTINGS_VERSION`. */
+function storedItems(s: Record<string, unknown>, version: number): readonly unknown[] {
+  if (version >= 5) return Array.isArray(s.items) ? s.items : DEFAULT_ITEMS;
+  if (version === 4) {
+    const currencies = Array.isArray(s.currencies) ? s.currencies : DEFAULT_CURRENCIES;
+    return [...currencies, ...ASSET_IDS];
+  }
+  return [...LEGACY_CURRENCIES, ...ASSET_IDS];
+}
+
 /**
- * Stored settings migrated and normalised. Without a stored object: the defaults. Stored
- * version < 4 (or none): the legacy four currencies with the stored base and amount. Fields
- * from older versions (`language`, `theme`) are ignored.
+ * Stored settings migrated and normalised. Without a stored object: the defaults. Version 5:
+ * as stored. Version 4: its `currencies` (the default two when invalid) + XAU, XAG, BTC.
+ * Version < 4 (or none): the legacy four + the three assets. Base and amount are kept; fields
+ * of older versions (`language`, `theme`, `currencies`) are dropped.
  */
 export function loadSettings(): Settings {
   const stored = readJSON<unknown>(STORAGE_KEY, null);
@@ -90,18 +139,23 @@ export function loadSettings(): Settings {
   const s = stored as Record<string, unknown>;
   const version = typeof s.version === 'number' ? s.version : 0;
   return normalise({
-    currencies:
-      version < 4 ? [...LEGACY_CURRENCIES] : (s.currencies ?? defaultSettings().currencies),
+    items: storedItems(s, version),
     base: s.base,
     amount: s.amount,
+    metalUnit: s.metalUnit,
   });
 }
+
+const sameList = (a: readonly string[], b: readonly string[]): boolean =>
+  a.length === b.length && a.every((code, i) => code === b[i]);
 
 const sameSettings = (a: Settings, b: Settings): boolean =>
   a.base === b.base &&
   a.amount === b.amount &&
-  a.currencies.length === b.currencies.length &&
-  a.currencies.every((code, i) => code === b.currencies[i]);
+  a.metalUnit === b.metalUnit &&
+  sameList(a.items, b.items);
+
+const isMetal = (code: string): boolean => getItem(code).kind === 'metal';
 
 const SettingsContext = createContext<SettingsApi | null>(null);
 
@@ -118,32 +172,37 @@ export function SettingsProvider({ children, initialSettings }: SettingsProvider
 
   useEffect(() => {
     writeJSON(STORAGE_KEY, {
-      currencies: settings.currencies,
+      items: settings.items,
       base: settings.base,
       amount: settings.amount,
+      metalUnit: settings.metalUnit,
       version: SETTINGS_VERSION,
     });
   }, [settings]);
 
   /**
-   * Applies `change` and normalises; keeps the old object when nothing changed. When the base
-   * changes (setBase, or removing the base) the amount is re-formatted with the new
-   * currency's decimals (SPEC §12), extra decimals dropped.
+   * Applies `change` and normalises; keeps the old object when nothing changed, and the old
+   * `items` array when the list did not change. When the base changes (setBase, or removing
+   * the base), or the metal unit changes while the base is a metal, the amount is re-formatted
+   * with the base's input decimals (SPEC §12, §13): extra decimals dropped, the number itself
+   * is not converted.
    */
   const update = useCallback((change: (s: Settings) => Partial<Settings> | null) => {
     setSettings((s) => {
       const patch = change(s);
       if (!patch) return s;
       const next = normalise({ ...s, ...patch });
-      if (next.base !== s.base) {
+      const unitMatters = next.metalUnit !== s.metalUnit && isMetal(next.base);
+      if (next.base !== s.base || unitMatters) {
         const { amount } = next;
         next.amount = formatAmountInput(
           amount,
           amount.length,
-          getCurrency(next.base).decimals,
+          inputDecimals(next.base, next.metalUnit),
         ).text;
       }
-      return sameSettings(s, next) ? s : next;
+      if (sameSettings(s, next)) return s;
+      return sameList(s.items, next.items) ? { ...next, items: s.items } : next;
     });
   }, []);
 
@@ -151,45 +210,91 @@ export function SettingsProvider({ children, initialSettings }: SettingsProvider
     (base: string) =>
       update((s) => {
         const code = toCode(base);
-        return code && s.currencies.includes(code) ? { base: code } : null;
+        return code && s.items.includes(code) ? { base: code } : null;
       }),
     [update],
   );
   const setAmount = useCallback((amount: string) => update(() => ({ amount })), [update]);
-  const addCurrency = useCallback(
+  const addItem = useCallback(
     (code: string) =>
       update((s) => {
         const c = toCode(code);
-        return c && !s.currencies.includes(c) ? { currencies: [...s.currencies, c] } : null;
+        return c && !s.items.includes(c) ? { items: [...s.items, c] } : null;
       }),
     [update],
+  );
+  const removeItem = useCallback(
+    (code: string) =>
+      update((s) => {
+        const c = toCode(code);
+        if (!c || !s.items.includes(c) || s.items.length <= MIN_ITEMS) return null;
+        return { items: s.items.filter((x) => x !== c) };
+      }),
+    [update],
+  );
+  const moveItem = useCallback(
+    (from: string, to: string) =>
+      update((s) => {
+        const a = s.items.indexOf(toCode(from) ?? '');
+        const b = s.items.indexOf(toCode(to) ?? '');
+        if (a < 0 || b < 0 || a === b) return null;
+        const items = [...s.items];
+        items.splice(b, 0, ...items.splice(a, 1));
+        return { items };
+      }),
+    [update],
+  );
+  const setMetalUnit = useCallback(
+    (unit: MetalUnit) =>
+      update((s) => {
+        const u = toMetalUnit(unit);
+        return u && u !== s.metalUnit ? { metalUnit: u } : null;
+      }),
+    [update],
+  );
+
+  // Compatibility for the current (pre-Task 18) UI, which only renders fiat rows.
+  const currencies = useMemo(
+    () => settings.items.filter((code) => !isAsset(code)),
+    [settings.items],
   );
   const removeCurrency = useCallback(
     (code: string) =>
       update((s) => {
         const c = toCode(code);
-        if (!c || !s.currencies.includes(c) || s.currencies.length <= MIN_CURRENCIES) return null;
-        return { currencies: s.currencies.filter((x) => x !== c) };
-      }),
-    [update],
-  );
-
-  const moveCurrency = useCallback(
-    (from: string, to: string) =>
-      update((s) => {
-        const a = s.currencies.indexOf(toCode(from) ?? '');
-        const b = s.currencies.indexOf(toCode(to) ?? '');
-        if (a < 0 || b < 0 || a === b) return null;
-        const currencies = [...s.currencies];
-        currencies.splice(b, 0, ...currencies.splice(a, 1));
-        return { currencies };
+        const fiat = s.items.filter((x) => !isAsset(x));
+        if (!c || !fiat.includes(c) || fiat.length <= MIN_CURRENCIES) return null;
+        if (s.items.length <= MIN_ITEMS) return null;
+        return { items: s.items.filter((x) => x !== c) };
       }),
     [update],
   );
 
   const value = useMemo<SettingsApi>(
-    () => ({ ...settings, setBase, setAmount, addCurrency, removeCurrency, moveCurrency }),
-    [settings, setBase, setAmount, addCurrency, removeCurrency, moveCurrency],
+    () => ({
+      ...settings,
+      setBase,
+      setAmount,
+      addItem,
+      removeItem,
+      moveItem,
+      setMetalUnit,
+      currencies,
+      addCurrency: addItem,
+      removeCurrency,
+      moveCurrency: moveItem,
+    }),
+    [
+      settings,
+      setBase,
+      setAmount,
+      addItem,
+      removeItem,
+      moveItem,
+      setMetalUnit,
+      currencies,
+      removeCurrency,
+    ],
   );
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;

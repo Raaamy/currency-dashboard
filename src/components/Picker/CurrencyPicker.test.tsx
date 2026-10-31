@@ -31,7 +31,7 @@ beforeAll(() => {
 function renderCard(settings: Partial<Settings> = {}, rates: Rates | null = RATES) {
   return render(
     <AppProviders
-      initialSettings={{ currencies: ['EUR', 'USD'], base: 'EUR', amount: '', ...settings }}
+      initialSettings={{ items: ['EUR', 'USD'], base: 'EUR', amount: '', ...settings }}
       initialData={{ rates }}
     >
       <ConverterCard />
@@ -113,7 +113,7 @@ describe('CurrencyPicker', () => {
   });
 
   it('removes a chosen currency when more than two are chosen', () => {
-    renderCard({ currencies: ['EUR', 'USD', 'GBP'] });
+    renderCard({ items: ['EUR', 'USD', 'GBP'] });
     const dialog = openPicker();
     expect(item(dialog, 'GBP')).not.toHaveAttribute('aria-disabled');
     fireEvent.click(item(dialog, 'GBP'));

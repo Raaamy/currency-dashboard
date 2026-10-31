@@ -18,15 +18,16 @@ One line per entry: `path — what / when to touch`.
 - `src/main.tsx` — bootstrap: imports global.css, mounts `<AppProviders><App /></AppProviders>`, registers the service worker (`registerSW({ immediate: true })`)
 - `src/App.tsx` — layout shell: `.app` > `.layout` grid with Header, ConverterCard, MarketsSection
 - `src/vite-env.d.ts` — Vite client + `vite-plugin-pwa/client` types
-- `src/styles/tokens.css` — all SPEC §8 design tokens + the §11 generic badge tints `--tint-1`…`--tint-6` (light on `:root`, dark via `prefers-color-scheme` only); change only with the spec
+- `src/styles/tokens.css` — all SPEC §8 design tokens + the §11 generic badge tints `--tint-1`…`--tint-6` + the §13 "Colours" (dark = the design canvas palette; `--input-bg/-border/-text`, `--seg-active`, `--flat`/`--flat-soft`, `--live`/`--live-text`, `--tint-eur-fg`…`--tint-btc-fg`, radial `--tint-gold`/`--tint-silver`) (light on `:root`, dark via `prefers-color-scheme` only); change only with the spec
 - `src/styles/global.css` — reset, body font, `.app`/`.layout` grid (one column below 900 px, `1.15fr 1fr` from 900 px; gutters 16 -> 24 px at 640 px), safe areas, hinge, reduced motion
 - `src/lib/` — pure helpers (no React/DOM), each with a `*.test.ts` next to it
 - `src/lib/currencies.ts` — currency registry (SPEC §11): `CurrencyCode` (= string), `CurrencyTint`, `Currency`, memoised `getCurrency(code)` (Intl name/symbol/decimals, overrides for EUR/USD/GBP/AED), `tintFor`, `compareByName`, `POPULAR`, `DEFAULT_CURRENCIES`, `LEGACY_CURRENCIES`
 - `src/lib/currencies.test.ts` — registry tests: names, symbols, decimals (JPY/KWD), unknown-code fallback, tints, lists, sorting
 - `src/lib/money.ts` — `NUMBER_LOCALE` (nl-NL) / `DATE_LOCALE` (en-GB), `DASH`, convert (NaN for a missing rate), parseAmount, roundTo, formatMoney (any ISO code, currency decimals, `—` for NaN)/Number/Rate/Quantity/Timestamp/Percent, ozToGram/gramToOz, quantityFor, rateChangePct (+ `money.test.ts`)
+- `src/lib/assets.ts` — items model (SPEC §13): `MetalUnit`/`METAL_UNITS`/`GRAMS_PER_UNIT`, `ItemKind`, `ASSET_IDS` (XAU, XAG, BTC), `DEFAULT_ITEMS`, `isAsset`, `getItem` (asset descriptors, fiat via `getCurrency`), `PriceInputs`, `eurPer`, `convertItem`, `displayDecimals`/`inputDecimals`, `unitLabel`/`rateLabel`, `rateDecimals`, `rateLine` (direction rule, nl-NL text), `itemChangePct`, `formatItemAmount` (+ `assets.test.ts`)
 - `src/lib/amountInput.ts` — `formatAmountInput(raw, caret, decimals, lastKey?)` (SPEC §12): live nl-NL formatting of the typed amount (grouping, one decimal separator, currency decimals, leading zeros, caret mapping, Backspace/Delete on a group dot) (+ `amountInput.test.ts`)
 - `src/lib/storage.ts` — readJSON/writeJSON/removeKey on localStorage under `wissel.*`, errors swallowed (+ `storage.test.ts`)
-- `src/i18n/en.ts` — SPEC §8 + §11 + §12 copy (incl. `reorder` and the `dnd.*` announcements) (English only); `MessageKey` = keys of `en`; the `cur.*` keys are no longer used (names come from the registry)
+- `src/i18n/en.ts` — SPEC §8 + §11 + §12 + §13 copy (incl. `reorder` and the `dnd.*` announcements) (English only); `MessageKey` = keys of `en`; the `cur.*` keys are no longer used (names come from the registry)
 - `src/i18n/index.ts` — `t(key, params)` and `useT()` (returns `t`) (+ `index.test.tsx`)
 - `src/data/http.ts` — the only `fetch` caller: `fetchJson` with 8 s AbortController timeout, `FetchError`, shape guards
 - `src/data/rates.ts` — open.er-api fetch (keeps every code, needs EUR + USD), `wissel.rates` cache, `isFresh` (6 h), cache-aware `getRates`, `availableCodes` (+ `rates.test.ts`)
@@ -34,7 +35,7 @@ One line per entry: `path — what / when to touch`.
 - `src/data/history.ts` — daily EUR snapshots (currency-api: jsDelivr -> pages.dev), latest + previous day (-1..-3), every 3-letter lower-case key, `wissel.history` cache, cache-aware `getHistory` (+ `history.test.ts`)
 - `src/data/usePolling.ts` — interval hook: runs on mount, pauses while hidden, runs again on visible (+ `usePolling.test.ts`)
 - `src/data/index.ts` — re-exports `useRates`, `useMarkets`, `useHistory`, `useRefreshAll`, `availableCodes` and the data types for components
-- `src/state/SettingsContext.tsx` — currencies/base/amount persisted to `wissel.settings` with `version: 4` (< 4 migrates to the legacy four, keeping base/amount); `normalise` enforces the invariants; `addCurrency`/`removeCurrency`/`moveCurrency`/`setBase`/`setAmount`; a base change re-formats the amount with the new currency's decimals (+ test)
+- `src/state/SettingsContext.tsx` — items/base/amount/metalUnit persisted to `wissel.settings` with `version: 5` (v4 = its currencies + XAU/XAG/BTC; < 4 = the legacy four + the assets; base/amount kept); `normalise` enforces the invariants (>= 2 items, no duplicates, base in items, unit g/oz/kg); `setBase` (any item)/`setAmount`/`addItem`/`removeItem`/`moveItem`/`setMetalUnit`; a base change (or a unit change with a metal base) re-formats the amount with `inputDecimals`; deprecated aliases for the pre-Task 18 UI: `currencies` (fiat items), `addCurrency`/`removeCurrency`/`moveCurrency`, `MIN_CURRENCIES` (+ test)
 - `src/state/DataContext.tsx` — single owner of fetching and polling; `useRates`, `useMarkets`, `useHistory`, `useRefreshAll` (+ test)
 - `src/state/AppProviders.tsx` — Settings + Data providers; tests pass `initialSettings` (normalised, storage not read) and `initialData` (no fetch, no polling)
 - `src/test/mockFetch.ts` — `mockFetch(routes)` URL-substring fetch mock and a sample open.er-api body, for tests

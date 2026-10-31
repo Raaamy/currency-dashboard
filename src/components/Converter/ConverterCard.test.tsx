@@ -17,7 +17,7 @@ const RATES: Rates = {
 function renderCard(settings: Partial<Settings> = {}, rates: Rates | null = RATES) {
   return render(
     <AppProviders
-      initialSettings={{ currencies: [...LEGACY_CURRENCIES], base: 'EUR', amount: '', ...settings }}
+      initialSettings={{ items: [...LEGACY_CURRENCIES], base: 'EUR', amount: '', ...settings }}
       initialData={{ rates }}
     >
       <ConverterCard />
@@ -42,7 +42,7 @@ const typeInto = (input: HTMLElement, value: string) =>
 
 describe('ConverterCard', () => {
   it('renders one row per chosen currency, in settings order', () => {
-    renderCard({ currencies: ['USD', 'EUR'], base: 'EUR' });
+    renderCard({ items: ['USD', 'EUR'], base: 'EUR' });
     const rows = screen.getAllByRole('listitem');
     expect(rows).toHaveLength(3);
     expect(rows[0]).toHaveTextContent('USD');
@@ -52,14 +52,14 @@ describe('ConverterCard', () => {
   });
 
   it('shows a dash for a chosen code missing from the rates table', () => {
-    renderCard({ currencies: ['EUR', 'USD', 'CHF'], amount: '10' });
+    renderCard({ items: ['EUR', 'USD', 'CHF'], amount: '10' });
     expect(rowAmount(label('USD'))).toBe('11,00');
     expect(rowAmount(label('CHF'))).toBe('—');
   });
 
   it('formats currencies without minor units without decimals (JPY)', () => {
     const rates = { ...RATES, rates: { ...RATES.rates, JPY: 170 } };
-    renderCard({ currencies: ['EUR', 'JPY'], amount: '12,34' }, rates);
+    renderCard({ items: ['EUR', 'JPY'], amount: '12,34' }, rates);
     expect(rowAmount(label('JPY'))).toBe('2.098');
   });
 
@@ -159,7 +159,7 @@ describe('ConverterCard', () => {
       screen.getAllByRole('listitem').filter((li) => !within(li).queryByText('Add currency'));
 
     it('toggles with Edit/Done and shows badge, code and name only', () => {
-      renderCard({ currencies: ['EUR', 'USD', 'GBP'], amount: '10' });
+      renderCard({ items: ['EUR', 'USD', 'GBP'], amount: '10' });
       expect(editButton()).toHaveTextContent('Edit');
       expect(editButton()).toHaveAttribute('aria-pressed', 'false');
 
@@ -183,7 +183,7 @@ describe('ConverterCard', () => {
     });
 
     it('removes a currency; the remove buttons disappear at two', () => {
-      renderCard({ currencies: ['EUR', 'USD', 'GBP'] });
+      renderCard({ items: ['EUR', 'USD', 'GBP'] });
       fireEvent.click(editButton());
       fireEvent.click(screen.getByRole('button', { name: 'Remove USD' }));
 
@@ -197,7 +197,7 @@ describe('ConverterCard', () => {
     });
 
     it('moves focus to the next remove button (or the previous one for the last row)', () => {
-      renderCard({ currencies: ['EUR', 'USD', 'GBP', 'AED', 'CHF'] });
+      renderCard({ items: ['EUR', 'USD', 'GBP', 'AED', 'CHF'] });
       fireEvent.click(editButton());
       fireEvent.click(screen.getByRole('button', { name: 'Remove USD' }));
       expect(screen.getByRole('button', { name: 'Remove GBP' })).toHaveFocus();
@@ -206,7 +206,7 @@ describe('ConverterCard', () => {
     });
 
     it('does not switch the base when a row is tapped', () => {
-      renderCard({ currencies: ['EUR', 'USD', 'GBP'] });
+      renderCard({ items: ['EUR', 'USD', 'GBP'] });
       fireEvent.click(editButton());
       fireEvent.click(screen.getByText('USD'));
       fireEvent.click(editButton());
@@ -214,7 +214,7 @@ describe('ConverterCard', () => {
     });
 
     it('removing the base makes the first remaining currency the active row', () => {
-      renderCard({ currencies: ['EUR', 'USD', 'GBP'], base: 'EUR', amount: '5' });
+      renderCard({ items: ['EUR', 'USD', 'GBP'], base: 'EUR', amount: '5' });
       fireEvent.click(editButton());
       fireEvent.click(screen.getByRole('button', { name: 'Remove EUR' }));
       expect(currencyRows()[0]).toHaveAttribute('aria-current', 'true');
@@ -284,7 +284,7 @@ describe('ConverterCard live amount formatting (SPEC §12)', () => {
   it('with base JPY (0 decimals) ignores the separator while typing', async () => {
     const user = userEvent.setup();
     const rates = { ...RATES, rates: { ...RATES.rates, JPY: 170 } };
-    renderCard({ currencies: ['JPY', 'EUR'], base: 'JPY' }, rates);
+    renderCard({ items: ['JPY', 'EUR'], base: 'JPY' }, rates);
     await user.type(input('JPY'), '12,5');
     expect(input('JPY')).toHaveValue('125');
     expect(rowAmount(label('EUR'))).toBe('0,74');
@@ -292,7 +292,7 @@ describe('ConverterCard live amount formatting (SPEC §12)', () => {
 
   it('re-formats the amount when the base switches to a currency with other decimals', () => {
     const rates = { ...RATES, rates: { ...RATES.rates, JPY: 170 } };
-    renderCard({ currencies: ['EUR', 'JPY'], amount: '12,50' }, rates);
+    renderCard({ items: ['EUR', 'JPY'], amount: '12,50' }, rates);
     fireEvent.click(screen.getByRole('button', { name: label('JPY') }));
     expect(input('JPY')).toHaveValue('12');
     expect(rowAmount(label('EUR'))).toBe('0,07');
@@ -337,7 +337,7 @@ describe('ConverterCard reordering (SPEC §12)', () => {
   const renderApp = () =>
     render(
       <AppProviders
-        initialSettings={{ currencies: ['EUR', 'USD', 'GBP'], base: 'EUR', amount: '10' }}
+        initialSettings={{ items: ['EUR', 'USD', 'GBP'], base: 'EUR', amount: '10' }}
         initialData={{
           rates: RATES,
           quotes: {
@@ -399,7 +399,7 @@ describe('ConverterCard reordering (SPEC §12)', () => {
     await waitFor(() => expect(rowCodes()).toEqual(['EUR', 'GBP', 'USD']));
     expect(liveRegion()).toHaveTextContent('USD dropped at position 3 of 3.');
     expect(chipCodes()).toEqual(['GBP', 'USD']);
-    expect(localStorage.getItem('wissel.settings')).toContain('"currencies":["EUR","GBP","USD"]');
+    expect(localStorage.getItem('wissel.settings')).toContain('"items":["EUR","GBP","USD"]');
 
     // The base stays the base; leaving edit mode shows the input on EUR again.
     await user.click(screen.getByRole('button', { name: 'Done' }));

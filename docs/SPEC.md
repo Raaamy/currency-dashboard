@@ -552,6 +552,10 @@ quick-amount chips (1 / 100 / 1K / 10K / 100K), and the hint under the input rea
   --text`, `--seg-active = --surface` with `--shadow-card` at half strength, `--live
   #4F9E78`, `--live-text #3F8A65`, `--flat #8A827A` on `rgba(43,40,36,.06)`, icon fg =
   `--text`. Contrast >= 4.5:1 for all text.
+- Light text tokens darkened for >= 5:1 (orchestrator, 2026-10-31): `--text-2 #6E665E`,
+  `--up #2B6F4F`, `--down #A23F3F`, `--flat #6B645D`, `--live-text #2E7553`. New
+  `--accent-text` for accent-coloured TEXT (Edit, Add currency or asset): light
+  `#9C5420`, dark `#F2A66B`; `--accent` stays for fills, borders and the dashed circle.
 - Font stays Nunito; numbers tabular.
 
 ### Screen (one page)

@@ -27,8 +27,25 @@ describe('t()', () => {
     expect(t('no.such.key' as MessageKey)).toBe('no.such.key');
   });
 
-  it('has exactly the SPEC §8, §11 and §12 keys', () => {
-    expect(Object.keys(en)).toHaveLength(35);
+  it('has exactly the SPEC §8, §11, §12 and §13 keys', () => {
+    expect(Object.keys(en)).toHaveLength(50);
+    expect(en).toMatchObject({
+      convertFrom: 'Convert from',
+      amountIn: 'Amount in {unit}',
+      clickHint: 'Click any result to convert from that currency or metal.',
+      tapHint: 'Tap a row to convert from it',
+      addItem: 'Add currency or asset',
+      metalsIn: 'Metals in',
+      liveAgo: 'Live · {ago}',
+      liveShort: 'Live',
+      offlineShort: 'Offline',
+      updatedShort: 'Updated {time}',
+      assets: 'Assets',
+      fromPill: 'From',
+      'unit.g': 'g',
+      'unit.oz': 'oz',
+      'unit.kg': 'kg',
+    });
     expect(Object.keys(en)).toEqual(
       expect.arrayContaining([
         'reorder',

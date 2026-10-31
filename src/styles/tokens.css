@@ -1,5 +1,5 @@
-/* Design tokens — the only source of colors, radii, shadows, type and motion (SPEC §8).
-   Light on :root; dark via the system preference only (no in-app setting). */
+/* Design tokens — the only source of colors, radii, shadows, type and motion (SPEC §8, §13
+   "Colours"). Light on :root; dark via the system preference only (no in-app setting). */
 
 :root {
   color-scheme: light;
@@ -9,14 +9,25 @@
   --surface: #ffffff;
   --surface-2: #fbf1e8;
   --text: #2b2824;
-  --text-2: #8a827a;
+  --text-2: #6e665e; /* >= 5:1 on surface, bg and surface-2 */
   --line: rgba(43, 40, 36, 0.07);
   --accent: #e59a66;
   --accent-soft: #fbeadf;
-  --up: #4f9e78;
+  /* Accent-coloured TEXT (Edit, Add currency or asset, links): darker than --accent for 5:1. */
+  --accent-text: #9c5420;
+  --up: #2b6f4f;
   --up-soft: #e4f2ea;
-  --down: #d47a7a;
+  --down: #a23f3f;
   --down-soft: #f9e6e6;
+  /* SPEC §13 "Colours": neutral change badge, live status, amount input, segmented control */
+  --flat: #6b645d;
+  --flat-soft: rgba(43, 40, 36, 0.06);
+  --live: #4f9e78;
+  --live-text: #2e7553;
+  --input-bg: var(--surface-2);
+  --input-border: color-mix(in srgb, var(--accent) 45%, transparent);
+  --input-text: var(--text);
+  --seg-active: var(--surface);
 
   /* Badge tints */
   --tint-eur: #e7ecf8;
@@ -24,8 +35,14 @@
   --tint-gbp: #f3e6f2;
   --tint-aed: #fbeadf;
   --tint-btc: #fde7d3;
-  --tint-gold: linear-gradient(135deg, #f7e3a1, #e9c25a);
-  --tint-silver: linear-gradient(135deg, #eef0f3, #c9cfd8);
+  --tint-gold: radial-gradient(circle at 32% 30%, #f6dc8c, #c99a36 60%, #9c7424);
+  --tint-silver: radial-gradient(circle at 32% 30%, #f2f4f8, #b8bfcc 60%, #8a93a3);
+  /* Badge glyph colours (SPEC §13): --text in light, a light tint of the badge in dark */
+  --tint-eur-fg: var(--text);
+  --tint-usd-fg: var(--text);
+  --tint-gbp-fg: var(--text);
+  --tint-aed-fg: var(--text);
+  --tint-btc-fg: var(--text);
   /* Generic currency tints (SPEC §11): every code but EUR/USD/GBP/AED, by a stable hash */
   --tint-1: #e3f0f4;
   --tint-2: #f4ebdd;
@@ -59,26 +76,41 @@
   :root {
     color-scheme: dark;
 
-    --bg: #1c1a18;
-    --surface: #272421;
+    /* SPEC §13 "Colours": the design canvas palette */
+    --bg: #262422;
+    --surface: #363230;
     --surface-2: #332a22;
-    --text: #f3efe9;
-    --text-2: #a49c92;
-    --line: rgba(255, 255, 255, 0.07);
-    --accent: #efae7e;
+    --text: #f3eee8;
+    --text-2: #b3aba1;
+    --line: #423c38;
+    --accent: #f2a66b;
+    --accent-text: #f2a66b;
     --accent-soft: #3d2e22;
-    --up: #7cc7a1;
-    --up-soft: #1f352b;
-    --down: #e79a9a;
-    --down-soft: #3a2626;
+    --up: #86e3ad;
+    --up-soft: rgba(111, 211, 155, 0.14);
+    --down: #ffa3a3;
+    --down-soft: rgba(242, 139, 139, 0.15);
+    --flat: #c4bcb2;
+    --flat-soft: rgba(255, 255, 255, 0.07);
+    --live: #6fd39b;
+    --live-text: #8fd9ad;
+    --input-bg: #45382c;
+    --input-border: #8a6a48;
+    --input-text: #fbf7f2;
+    --seg-active: #4a4440;
 
-    --tint-eur: #283046;
-    --tint-usd: #1f352b;
-    --tint-gbp: #36283a;
-    --tint-aed: #3d2e22;
-    --tint-btc: #45301c;
-    --tint-gold: linear-gradient(135deg, #d8b24e, #9a7a2c);
-    --tint-silver: linear-gradient(135deg, #c3c9d2, #7e8792);
+    --tint-eur: #2f3a5c;
+    --tint-usd: #264536;
+    --tint-gbp: #3e2f4c;
+    --tint-aed: #4a3628;
+    --tint-btc: #4f3720;
+    --tint-eur-fg: #e3e8ff;
+    --tint-usd-fg: #d6f5e3;
+    --tint-gbp-fg: #efe2ff;
+    --tint-aed-fg: #ffe6cf;
+    --tint-btc-fg: #ffd9a8;
+    --tint-gold: radial-gradient(circle at 32% 30%, #f6dc8c, #c99a36 60%, #9c7424);
+    --tint-silver: radial-gradient(circle at 32% 30%, #f2f4f8, #b8bfcc 60%, #8a93a3);
     --tint-1: #20343b;
     --tint-2: #3a3125;
     --tint-3: #2c2940;
