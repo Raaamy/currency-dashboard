@@ -35,8 +35,8 @@ laid out for the foldable iPhone (narrow outer screen, near-square inner screen)
   component. No Tailwind, no CSS-in-JS. Keeps the bundle small and WKWebView-friendly.
 - Font: `@fontsource-variable/nunito` (self-hosted, works offline and inside Capacitor).
 - PWA: `vite-plugin-pwa` (auto update, precache app shell), `@vite-pwa/assets-generator`
-  for icons from `public/icon.svg` (two opposing horizontal arrows (exchange symbol),
-  white, round caps, stroke ~64 on a 512 grid, on the apricot rounded square).
+  for icons from `public/icon.svg` ("Two coins": a navy € coin behind an apricot `#f2a66b` $
+  coin, Nunito 900 glyphs as paths, on a `#262422` rounded square; apple and maskable full bleed).
 - Tests: Vitest (+ jsdom, @testing-library/react for the few component tests).
 - Lint/format: ESLint (Vite's React TS config) + Prettier.
 - State: React hooks + one context. No state library.

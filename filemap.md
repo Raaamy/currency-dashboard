@@ -9,8 +9,8 @@ One line per entry: `path — what / when to touch`.
 - `filemap.md` — this index
 - `package.json` — deps (incl. `@dnd-kit/core|sortable|utilities|modifiers`; dev: `@testing-library/user-event`) and scripts (dev, build, preview, lint, format, test, test:watch); touch when adding deps/scripts
 - `vite.config.ts` — Vite (`base: './'`, `@/` alias) + Vitest config (jsdom, globals, setup file) + VitePWA (autoUpdate, manifest, precache, NetworkFirst `wissel-api` cache for the API hosts)
-- `pwa-assets.config.ts` — `@vite-pwa/assets-generator` config (minimal2023 preset, apricot maskable/apple bg); run `npm run icons`
-- `public/` — `icon.svg` (source icon: white exchange arrows on an apricot rounded square) + generated favicon.ico, apple-touch-icon-180x180, pwa-64/192/512, maskable-icon-512 PNGs
+- `pwa-assets.config.ts` — `@vite-pwa/assets-generator` config (minimal2023 preset, full-bleed dark maskable/apple bg); run `npm run icons`
+- `public/` — `icon.svg` (source icon: "Two coins", € and $ coins on a dark rounded square) + generated favicon.ico, apple-touch-icon-180x180, pwa-64/192/512, maskable-icon-512 PNGs
 - `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json` — strict TS; `@/*` path alias (keep in sync with vite.config.ts)
 - `eslint.config.js` — ESLint flat config from the Vite React TS template
 - `.prettierrc`, `.prettierignore` — Prettier settings; Markdown is excluded so docs keep their hand formatting

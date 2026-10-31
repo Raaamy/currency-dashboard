@@ -4,14 +4,17 @@ export default defineConfig({
   headLinkOptions: { preset: '2023' },
   preset: {
     ...minimal2023Preset,
-    // Maskable icon: glyph padded into the safe zone on a full-bleed apricot background.
+    // The icon's own background fills the rounded corners, so these come out full bleed.
+    // Maskable: coins shrunk into the safe zone. Apple: unpadded; iOS rounds it.
     maskable: {
       ...minimal2023Preset.maskable,
-      resizeOptions: { background: '#E59A66' },
+      padding: 0.12,
+      resizeOptions: { background: '#262422' },
     },
     apple: {
       ...minimal2023Preset.apple,
-      resizeOptions: { background: '#E59A66' },
+      padding: 0,
+      resizeOptions: { background: '#262422' },
     },
   },
   images: ['public/icon.svg'],
